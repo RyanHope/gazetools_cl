@@ -17,20 +17,41 @@ class Image(QLabel):
 
 class MainApp(QWidget):
 
+    EZ = 700.0
+    SW = 473.76
+    SH = 296.1
+    RX = 1680
+    RY = 1050
+
     def __init__(self):
         QWidget.__init__(self)
-        self.video_size = QSize(320, 180)
-        self.levels = 5
+        self.reduce_factor = 6
+        self.video_size = QSize(self.RX/self.reduce_factor, self.RY/self.reduce_factor)
+        self.levels = 6
         self.focus = None
         self.setup_ui()
         self.setup_camera()
-        N = 320*180*4
-        self.resmap = np.array(np.reshape(255-GT.subtended_angle(np.tile(np.arange(320*2),180*2),
-                                                 np.repeat(np.arange(180*2), 320*2),
-                                                 [320]*N,
-                                                 [180]*N,
-                                                 320*2,180*2,473.76,296.1,
-                                                 [700]*N,[0]*N,[0]*N)/40*255,(180*2,320*2)),dtype=np.uint8)
+        self.setup_codec()
+
+    def setup_codec(self):
+        self.decay_constant = 0.106
+        self.halfres_eccentricity = 2.3
+        self.contrast_sensitivity = 1.0/64.0
+        self.critical_eccentricity = [0.0]
+        horizontal_degree = GT.subtended_angle([0],[self.RX/2],[self.RX],[self.RY/2],self.RX,self.RY,self.SW,self.SH,[self.EZ],[0],[0])[0]
+        viewing_distance = (self.RX/2)/np.tan(np.pi*horizontal_degree/360);
+        freq = 0.5/(horizontal_degree/self.RX)
+        for l in xrange(self.levels):
+            ecc = self.halfres_eccentricity * ( (np.log(1/self.contrast_sensitivity)*(1<<l)/(self.decay_constant*freq))-1 )
+            if ecc > 90.0: ecc = 90.0
+            self.critical_eccentricity.append(ecc)
+        self.critical_eccentricity.append(90.0)
+        self.fovea_threshold = np.tan(self.critical_eccentricity[1]*np.pi/180 )*viewing_distance;
+
+        w = self.RX*2
+        h = self.RY*2
+        n = len(range(0,w)*h)
+        self.resmap = np.reshape(GT.subtended_angle(np.tile(np.arange(w),h), np.repeat(np.arange(h), w), [w/2]*n, [h/2]*n, self.RX, self.RY, self.SW, self.SH, [self.EZ]*n,[0]*n,[0]*n)/90,(h,w))
 
     def makeImage(self):
         image = Image()
@@ -49,7 +70,7 @@ class MainApp(QWidget):
 
         self.image_labels1 = [self.makeImage() for _ in xrange(self.levels)]
         self.image_labels2 = [self.makeImage() for _ in xrange(self.levels)]
-        self.image_labels3 = [self.makeImage()]
+        self.image_labels3 = [self.makeImage() for _ in xrange(1)]
         self.image_labels1[0].mousePress.connect(self.addFocus)
         self.image_labels3[0].setFixedSize(self.video_size.width()*2,self.video_size.height()*2)
 
@@ -127,7 +148,9 @@ class MainApp(QWidget):
                             luma.strides[0], QImage.Format_RGB888)
             self.image_labels2[l].setPixmap(QPixmap.fromImage(image))
 
-        luma = cv2.merge((self.resmap,self.resmap,self.resmap))
+        resmap = np.uint8(255-self.resmap*255)
+        luma = cv2.merge((resmap,resmap,resmap))
+        luma = cv2.resize(luma, (self.video_size.width()*2, self.video_size.height()*2))
         image = QImage(luma, luma.shape[1], luma.shape[0],
                         luma.strides[0], QImage.Format_RGB888)
         self.image_labels3[0].setPixmap(QPixmap.fromImage(image))
