@@ -2,7 +2,28 @@
 
 import pyopencl as cl
 import numpy as np
-from scipy.stats import exponnorm
+
+def savgol_coeffs(window_length, polyorder, deriv=0, delta=1.0, pos=None):
+    if polyorder >= window_length:
+        raise ValueError("polyorder must be less than window_length.")
+    halflen, rem = divmod(window_length, 2)
+    if rem == 0:
+        raise ValueError("window_length must be odd.")
+    if pos is None:
+        pos = halflen
+    if not (0 <= pos < window_length):
+        raise ValueError("pos must be nonnegative and less than "
+                         "window_length.")
+    x = np.arange(-pos, window_length - pos, dtype=float)[::-1]
+    order = np.arange(polyorder + 1).reshape(-1, 1)
+    if order.size == 1:
+        A = np.atleast_2d(x ** order[0, 0])
+    else:
+        A = x ** order
+    y = np.zeros(polyorder + 1)
+    y[deriv] = np.math.factorial(deriv) / (delta ** deriv)
+    coeffs, _, _, _ = np.linalg.lstsq(A, y)
+    return coeffs
 
 def loadProgram(filename):
     with open(filename, 'r') as f:
@@ -13,8 +34,9 @@ class gazetools:
     def __init__(self):
         self.ctx = cl.create_some_context()
         self.queue = cl.CommandQueue(self.ctx)
-        self.cl_distance_2_point = cl.Program(self.ctx, loadProgram("distance_2_point.cl")).build().distance_2_point
-        self.cl_subtended_angle = cl.Program(self.ctx, loadProgram("subtended_angle.cl")).build().subtended_angle
+        build_opts = "-I."
+        self.cl_distance_2_point = cl.Program(self.ctx, loadProgram("distance_2_point.cl")).build(build_opts).distance_2_point
+        self.cl_subtended_angle = cl.Program(self.ctx, loadProgram("subtended_angle.cl")).build(build_opts).subtended_angle
 
     def distance_2_point(self, x, y, rx, ry, sw, sh, ez, ex, ey):
         x = np.array(x, dtype=np.float32, copy=False)
@@ -64,24 +86,32 @@ class gazetools:
 
 if __name__ == "__main__":
     GT = gazetools()
-    print GT.distance_2_point([0.0,0.0,1680.0/2.0,1680.0/2.0],
-                              [0.0,1050.0/2.0,0.0,1050/2.0],
-                              1680,1050,473.76,296.1,
-                              [700.0]*4,[0.0]*4,[0.0]*4)
-    print GT.distance_2_point([1680/2],
-                              [1050/2],
-                              1680,1050,473.76,296.1,
-                              [700]*1,[0]*1,[0]*1)
-    print GT.subtended_angle([0],
+    # print GT.distance_2_point([0.0,0.0,1680.0/2.0,1680.0/2.0],
+    #                           [0.0,1050.0/2.0,0.0,1050/2.0],
+    #                           1680,1050,473.76,296.1,
+    #                           [700.0]*4,[0.0]*4,[0.0]*4)
+    # print GT.distance_2_point([1680/2],
+    #                           [1050/2],
+    #                           1680,1050,473.76,296.1,
+    #                           [700]*1,[0]*1,[0]*1)
+    # print GT.subtended_angle([0],
+    #                          [1050/2],
+    #                          [1680],
+    #                          [1050/2],
+    #                          1680,1050,473.76,296.1,
+    #                          [700]*1,[0]*1,[0]*1)
+    N = 1680 * 1050
+    print GT.subtended_angle(np.tile(np.arange(1680),1050),
+                             np.repeat(np.arange(1050), 1680),
+                             [1680/2],
                              [1050/2],
-                             [1680],
-                             [1050/2],
-                             1680,1050,473.76,296.1,
-                             [700]*1,[0]*1,[0]*1)
-    N = 10000
-    print GT.subtended_angle(exponnorm.rvs(150, size=N),
-                             exponnorm.rvs(150, size=N),
-                             (1680),
-                             (1050/2),
                              1680,1050,473.76,296.1,
                              [700]*N,[0]*N,[0]*N)
+    # N = 10000
+    # print GT.subtended_angle(np.random.exponential(50,N),
+    #                          np.random.exponential(200,N),
+    #                          (1680),
+    #                          (1050/2),
+    #                          1680,1050,473.76,296.1,
+    #                          [700]*N,[0]*N,[0]*N)
+    # print savgol_coeffs(11, 2, 0, 1.0/500.0)
