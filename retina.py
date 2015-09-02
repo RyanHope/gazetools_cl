@@ -46,12 +46,26 @@ class MainApp(QWidget):
             if ecc > 90.0: ecc = 90.0
             self.critical_eccentricity.append(ecc)
         self.critical_eccentricity.append(90.0)
-        self.fovea_threshold = np.tan(self.critical_eccentricity[1]*np.pi/180 )*viewing_distance;
+        print self.critical_eccentricity
+        self.fovea_threshold = np.tan(self.critical_eccentricity[1]*np.pi/180 )*viewing_distance
+        print self.fovea_threshold
 
         w = self.RX*2
         h = self.RY*2
         n = len(range(0,w)*h)
-        self.resmap = np.reshape(GT.subtended_angle(np.tile(np.arange(w),h), np.repeat(np.arange(h), w), [w/2]*n, [h/2]*n, self.RX, self.RY, self.SW, self.SH, [self.EZ]*n,[0]*n,[0]*n)/90,(h,w))
+        self.resmap = GT.subtended_angle(np.tile(np.arange(w),h), np.repeat(np.arange(h), w), [w/2]*n, [h/2]*n, self.RX, self.RY, self.SW, self.SH, [self.EZ]*n,[0]*n,[0]*n)
+        for i in xrange(n):
+            for l in xrange(self.levels+1):
+                if self.resmap[i] >= self.critical_eccentricity[l] and self.resmap[i] < self.critical_eccentricity[l+1]:
+                    if l==0:
+                        self.resmap[i] = 1.0
+                    elif l==self.levels:
+                        self.resmap[i] = 1.0/(1<<(self.levels-1))
+                    else:
+                        hres = 1.0/(1<<(l-1))
+                        lres = 1.0/(1<<l)
+                        self.resmap[i] = (lres*(self.resmap[i]-self.critical_eccentricity[l]) + hres*(self.critical_eccentricity[l+1]-self.resmap[i]))/(self.critical_eccentricity[l+1]-self.critical_eccentricity[l])
+        self.resmap = np.reshape(self.resmap,(h,w))
 
     def makeImage(self):
         image = Image()
