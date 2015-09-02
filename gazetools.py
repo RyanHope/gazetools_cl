@@ -37,6 +37,7 @@ class gazetools:
         build_opts = "-I."
         self.cl_distance_2_point = cl.Program(self.ctx, loadProgram("distance_2_point.cl")).build(build_opts).distance_2_point
         self.cl_subtended_angle = cl.Program(self.ctx, loadProgram("subtended_angle.cl")).build(build_opts).subtended_angle
+        self.cl_resmap = cl.Program(self.ctx, loadProgram("resmap.cl")).build(build_opts).resmap
 
     def distance_2_point(self, x, y, rx, ry, sw, sh, ez, ex, ey):
         x = np.array(x, dtype=np.float32, copy=False)
@@ -82,6 +83,17 @@ class gazetools:
         self.cl_subtended_angle(self.queue, x1.shape, None, x1_buf, y1_buf, x2_buf, y2_buf, rx, ry, sw, sh, ez_buf, ex_buf, ey_buf, out_buf)
         out = np.empty_like(x1)
         cl.enqueue_read_buffer(self.queue, out_buf, out).wait()
+        return out
+
+    def resmap(self, ecc, ce):
+        ecc = np.array(ecc, dtype=np.float32, copy=False)
+        ce = np.array(ce, dtype=np.float32, copy=False)
+        nl = np.uint32(ce.shape[0]-1)
+        ecc_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_WRITE | cl.mem_flags.COPY_HOST_PTR, hostbuf=ecc)
+        ce_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=ce)
+        self.cl_resmap(self.queue, ecc.shape, None, ecc_buf, ce_buf, nl)
+        out = np.empty_like(ecc)
+        cl.enqueue_read_buffer(self.queue, ecc_buf, out).wait()
         return out
 
 if __name__ == "__main__":

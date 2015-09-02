@@ -53,18 +53,10 @@ class MainApp(QWidget):
         w = self.RX*2
         h = self.RY*2
         n = len(range(0,w)*h)
-        self.resmap = GT.subtended_angle(np.tile(np.arange(w),h), np.repeat(np.arange(h), w), [w/2]*n, [h/2]*n, self.RX, self.RY, self.SW, self.SH, [self.EZ]*n,[0]*n,[0]*n)
-        for i in xrange(n):
-            for l in xrange(self.levels+1):
-                if self.resmap[i] >= self.critical_eccentricity[l] and self.resmap[i] < self.critical_eccentricity[l+1]:
-                    if l==0:
-                        self.resmap[i] = 1.0
-                    elif l==self.levels:
-                        self.resmap[i] = 1.0/(1<<(self.levels-1))
-                    else:
-                        hres = 1.0/(1<<(l-1))
-                        lres = 1.0/(1<<l)
-                        self.resmap[i] = (lres*(self.resmap[i]-self.critical_eccentricity[l]) + hres*(self.critical_eccentricity[l+1]-self.resmap[i]))/(self.critical_eccentricity[l+1]-self.critical_eccentricity[l])
+        self.ecc = GT.subtended_angle(np.tile(np.arange(w),h), np.repeat(np.arange(h), w), [w/2]*n, [h/2]*n, self.RX, self.RY, self.SW, self.SH, [self.EZ]*n,[0]*n,[0]*n)
+        self.resmap = np.copy(self.ecc)
+        self.resmap = GT.resmap(self.resmap, self.critical_eccentricity)
+        self.ecc = np.reshape(self.ecc,(h,w))
         self.resmap = np.reshape(self.resmap,(h,w))
 
     def makeImage(self):
@@ -84,9 +76,10 @@ class MainApp(QWidget):
 
         self.image_labels1 = [self.makeImage() for _ in xrange(self.levels)]
         self.image_labels2 = [self.makeImage() for _ in xrange(self.levels)]
-        self.image_labels3 = [self.makeImage() for _ in xrange(1)]
+        self.image_labels3 = [self.makeImage() for _ in xrange(2)]
         self.image_labels1[0].mousePress.connect(self.addFocus)
         self.image_labels3[0].setFixedSize(self.video_size.width()*2,self.video_size.height()*2)
+        self.image_labels3[1].setFixedSize(self.video_size.width()*2,self.video_size.height()*2)
 
         self.layers1_layout = QHBoxLayout()
         self.layers2_layout = QHBoxLayout()
@@ -162,12 +155,19 @@ class MainApp(QWidget):
                             luma.strides[0], QImage.Format_RGB888)
             self.image_labels2[l].setPixmap(QPixmap.fromImage(image))
 
-        resmap = np.uint8(255-self.resmap*255)
-        luma = cv2.merge((resmap,resmap,resmap))
+        ecc = np.uint8(255-self.ecc/90*255)
+        luma = cv2.merge((ecc,ecc,ecc))
         luma = cv2.resize(luma, (self.video_size.width()*2, self.video_size.height()*2))
         image = QImage(luma, luma.shape[1], luma.shape[0],
                         luma.strides[0], QImage.Format_RGB888)
         self.image_labels3[0].setPixmap(QPixmap.fromImage(image))
+
+        resmap = np.uint8(self.resmap*255)
+        luma = cv2.merge((resmap,resmap,resmap))
+        luma = cv2.resize(luma, (self.video_size.width()*2, self.video_size.height()*2))
+        image = QImage(luma, luma.shape[1], luma.shape[0],
+                        luma.strides[0], QImage.Format_RGB888)
+        self.image_labels3[1].setPixmap(QPixmap.fromImage(image))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
