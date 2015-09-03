@@ -67,6 +67,7 @@ class MainApp(QWidget):
 
     def addFocus(self, event):
         self.focus = (event.pos().x()*self.reduce_factor,event.pos().y()*self.reduce_factor)
+        print self.focus
 
     def setup_ui(self):
         """Initialize widgets.
