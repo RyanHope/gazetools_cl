@@ -4,15 +4,16 @@ __kernel void blend(__global unsigned char* pyramid, unsigned int n, __global fl
 {
   unsigned int c = get_global_id(0);
   unsigned int r = get_global_id(1);
+
   unsigned int bx = (w+1)/2-x;
   unsigned int by = (h+1)/2-y;
   unsigned int j = (r+by)*w + (c+bx);
-  unsigned int k = r*w + c;
-
-  unsigned int level = lmap[j];
+  unsigned int l = lmap[j];
   float b = blendmap[j];
-  float v1 = pyramid[level*n + k];
-  float v2 = pyramid[(level-1)*n + k];
 
-  out[r*w+c] = (v1*(1-b) + v2*b);
+  unsigned int k = r*w + c;
+  float v1 = pyramid[l*n + k];
+  float v2 = pyramid[(l-1)*n + k];
+
+  out[k] = (v1*(1-b) + v2*b);
 }
