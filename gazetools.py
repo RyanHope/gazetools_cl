@@ -110,21 +110,17 @@ class gazetools:
         cl.enqueue_read_buffer(self.queue, lmap_buf, lmap)
         return resmap, blendmap, lmap
 
-    def blend(self, pyramid, s, blendmap, lmap, x, y):
+    def blend(self, pyramid, w, h, blendmap, lmap, x, y):
         # pyramid = np.array(pyramid, dtype=np.float32, copy=False)
         # blendmap = np.array(blendmap, dtype=np.float32, copy=False)
         # lmap = np.array(lmap, dtype=np.uint32, copy=False)
-        w = np.uint32(s[1])
-        h = np.uint32(s[0])
-        x = np.uint32(x)
-        y = np.uint32(y)
-        n = np.uint32(w*h)
+        n = w*h
         out = np.zeros(n, dtype=np.uint8)
         pyramid_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=pyramid)
         blendmap_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=blendmap)
         lmap_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=lmap)
         out_buf = cl.Buffer(self.ctx, cl.mem_flags.WRITE_ONLY, out.nbytes)
-        self.cl_blend(self.queue, (s[1],s[0]), None, pyramid_buf, n, blendmap_buf, lmap_buf, out_buf, w, h, x, y)
+        self.cl_blend(self.queue, (w,h), None, pyramid_buf, np.uint32(n), blendmap_buf, lmap_buf, out_buf, np.uint32(w), np.uint32(h), np.uint32(x), np.uint32(y))
         self.queue.finish()
         cl.enqueue_read_buffer(self.queue, out_buf, out)
         return out

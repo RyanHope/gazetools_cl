@@ -23,7 +23,7 @@ class MainApp(QWidget):
 
     def __init__(self):
         QWidget.__init__(self)
-        self.reduce_factor = 1
+        self.reduce_factor = 3
         self.levels = 6
         self.setup_camera()
         self.setup_codec()
@@ -66,7 +66,7 @@ class MainApp(QWidget):
         return image
 
     def addFocus(self, event):
-        self.focus = (event.pos().x()*self.reduce_factor,event.pos().y()*self.reduce_factor)
+        self.focus = (event.pos().x(),event.pos().y())
         print self.focus
 
     def setup_ui(self):
@@ -75,42 +75,41 @@ class MainApp(QWidget):
 
         self.image_labels = [self.makeImage() for _ in xrange(2)]
         self.image_labels[0].mousePress.connect(self.addFocus)
-        # self.image_labels1 = [self.makeImage() for _ in xrange(self.levels)]
-        # self.image_labels2 = [self.makeImage() for _ in xrange(self.levels)]
-        # self.image_labels3 = [self.makeImage() for _ in xrange(3)]
-        # self.image_labels1[0].mousePress.connect(self.addFocus)
-        # self.image_labels3[0].setFixedSize(self.video_size.width()*2,self.video_size.height()*2)
-        # self.image_labels3[1].setFixedSize(self.video_size.width()*2,self.video_size.height()*2)
-        # self.image_labels3[2].setFixedSize(self.video_size.width()*2,self.video_size.height()*2)
+        self.image_labels1 = [self.makeImage() for _ in xrange(self.levels)]
+        self.image_labels2 = [self.makeImage() for _ in xrange(self.levels)]
+        self.image_labels3 = [self.makeImage() for _ in xrange(3)]
+        self.image_labels3[0].setFixedSize(self.video_size.width()*2,self.video_size.height()*2)
+        self.image_labels3[1].setFixedSize(self.video_size.width()*2,self.video_size.height()*2)
+        self.image_labels3[2].setFixedSize(self.video_size.width()*2,self.video_size.height()*2)
 
         self.layers_layout = QHBoxLayout()
         for i in xrange(2):
             self.layers_layout.addWidget(self.image_labels[i])
         self.layers = QWidget()
         self.layers.setLayout(self.layers_layout)
-        # self.layers1_layout = QHBoxLayout()
-        # self.layers2_layout = QHBoxLayout()
-        # self.layers3_layout = QHBoxLayout()
-        # for i in xrange(self.levels):
-        #     self.layers1_layout.addWidget(self.image_labels1[i])
-        #     self.layers2_layout.addWidget(self.image_labels2[i])
-        # for l in self.image_labels3:
-        #     self.layers3_layout.addWidget(l)
-        # self.layers1 = QWidget()
-        # self.layers1.setLayout(self.layers1_layout)
-        # self.layers2 = QWidget()
-        # self.layers2.setLayout(self.layers2_layout)
-        # self.layers3 = QWidget()
-        # self.layers3.setLayout(self.layers3_layout)
+        self.layers1_layout = QHBoxLayout()
+        self.layers2_layout = QHBoxLayout()
+        self.layers3_layout = QHBoxLayout()
+        for i in xrange(self.levels):
+            self.layers1_layout.addWidget(self.image_labels1[i])
+            self.layers2_layout.addWidget(self.image_labels2[i])
+        for l in self.image_labels3:
+            self.layers3_layout.addWidget(l)
+        self.layers1 = QWidget()
+        self.layers1.setLayout(self.layers1_layout)
+        self.layers2 = QWidget()
+        self.layers2.setLayout(self.layers2_layout)
+        self.layers3 = QWidget()
+        self.layers3.setLayout(self.layers3_layout)
 
         self.quit_button = QPushButton("Quit")
         self.quit_button.clicked.connect(self.close)
 
         self.main_layout = QVBoxLayout()
+        self.main_layout.addWidget(self.layers1)
+        self.main_layout.addWidget(self.layers2)
+        self.main_layout.addWidget(self.layers3)
         self.main_layout.addWidget(self.layers)
-        # self.main_layout.addWidget(self.layers1)
-        # self.main_layout.addWidget(self.layers2)
-        # self.main_layout.addWidget(self.layers3)
         self.main_layout.addWidget(self.quit_button)
 
         self.setLayout(self.main_layout)
@@ -152,6 +151,8 @@ class MainApp(QWidget):
             for _ in xrange(i):
                 G = cv2.pyrUp(G)
             gpB.append(G[0:frame.shape[0],0:frame.shape[1]])
+        for i in xrange(self.levels):
+            gpA[i] = gpA[i][0:frame.shape[0],0:frame.shape[1]]
 
         orig = np.reshape(gpB[0], (frame.shape[0],frame.shape[1]))
         luma = cv2.merge((orig,orig,orig))
@@ -160,7 +161,7 @@ class MainApp(QWidget):
         image = QImage(luma, luma.shape[1], luma.shape[0], luma.strides[0], QImage.Format_RGB888)
         self.image_labels[0].setPixmap(QPixmap.fromImage(image))
 
-        z = GT.blend(np.concatenate(gpB), frame.shape, self.blendmap, self.lmap, self.focus[0], self.focus[1])
+        z = GT.blend(np.vstack(gpB), frame.shape[1], frame.shape[0], self.blendmap, self.lmap, self.focus[0]*self.reduce_factor, self.focus[1]*self.reduce_factor)
         luma =  np.reshape(z, (frame.shape[0],frame.shape[1]))
 
         luma = cv2.merge((luma,luma,luma))
@@ -168,40 +169,38 @@ class MainApp(QWidget):
         image = QImage(luma, luma.shape[1], luma.shape[0], luma.strides[0], QImage.Format_RGB888)
         self.image_labels[1].setPixmap(QPixmap.fromImage(image))
 
-        # for l in xrange(self.levels):
-        #     luma = cv2.merge((gpA[l][:,:,0],gpA[l][:,:,0],gpA[l][:,:,0]))
-        #     luma = cv2.resize(luma, (luma.shape[1]/self.reduce_factor, luma.shape[0]/self.reduce_factor))
-        #     if l == 0 and self.focus != None:
-        #         cv2.circle(luma, self.focus, 3, (255, 0, 0))
-        #     image = QImage(luma, luma.shape[1], luma.shape[0],
-        #                     luma.strides[0], QImage.Format_RGB888)
-        #     self.image_labels1[l].setPixmap(QPixmap.fromImage(image))
-        #     luma = cv2.merge((gpB[l][:,:,0],gpB[l][:,:,0],gpB[l][:,:,0]))
-        #     luma = cv2.resize(luma, (luma.shape[1]/self.reduce_factor, luma.shape[0]/self.reduce_factor))
-        #     image = QImage(luma, luma.shape[1], luma.shape[0],
-        #                     luma.strides[0], QImage.Format_RGB888)
-        #     self.image_labels2[l].setPixmap(QPixmap.fromImage(image))
+        for l in xrange(self.levels):
+            luma = cv2.merge((gpA[l],gpA[l],gpA[l]))
+            luma = cv2.resize(luma, (luma.shape[1]/self.reduce_factor, luma.shape[0]/self.reduce_factor))
+            image = QImage(luma, luma.shape[1], luma.shape[0],
+                            luma.strides[0], QImage.Format_RGB888)
+            self.image_labels1[l].setPixmap(QPixmap.fromImage(image))
+            luma = cv2.merge((gpB[l],gpB[l],gpB[l]))
+            luma = cv2.resize(luma, (luma.shape[1]/self.reduce_factor, luma.shape[0]/self.reduce_factor))
+            image = QImage(luma, luma.shape[1], luma.shape[0],
+                            luma.strides[0], QImage.Format_RGB888)
+            self.image_labels2[l].setPixmap(QPixmap.fromImage(image))
 
-        # ecc = np.uint8(255-self.ecc/90*255)
-        # luma = cv2.merge((ecc,ecc,ecc))
-        # luma = cv2.resize(luma, (self.video_size.width()*2, self.video_size.height()*2))
-        # image = QImage(luma, luma.shape[1], luma.shape[0],
-        #                 luma.strides[0], QImage.Format_RGB888)
-        # self.image_labels3[0].setPixmap(QPixmap.fromImage(image))
-        #
-        # resmap = np.uint8(self.resmap*255)
-        # luma = cv2.merge((resmap,resmap,resmap))
-        # luma = cv2.resize(luma, (self.video_size.width()*2, self.video_size.height()*2))
-        # image = QImage(luma, luma.shape[1], luma.shape[0],
-        #                 luma.strides[0], QImage.Format_RGB888)
-        # self.image_labels3[1].setPixmap(QPixmap.fromImage(image))
-        #
-        # blendmap = np.uint8(self.blendmap*255)
-        # luma = cv2.merge((blendmap,blendmap,blendmap))
-        # luma = cv2.resize(luma, (self.video_size.width()*2, self.video_size.height()*2))
-        # image = QImage(luma, luma.shape[1], luma.shape[0],
-        #                 luma.strides[0], QImage.Format_RGB888)
-        # self.image_labels3[2].setPixmap(QPixmap.fromImage(image))
+        ecc = np.uint8(255-self.ecc/90*255)
+        luma = cv2.merge((ecc,ecc,ecc))
+        luma = cv2.resize(luma, (luma.shape[1]/self.reduce_factor, luma.shape[0]/self.reduce_factor))
+        image = QImage(luma, luma.shape[1], luma.shape[0],
+                        luma.strides[0], QImage.Format_RGB888)
+        self.image_labels3[0].setPixmap(QPixmap.fromImage(image))
+
+        resmap = np.uint8(self.resmap*255)
+        luma = cv2.merge((resmap,resmap,resmap))
+        luma = cv2.resize(luma, (luma.shape[1]/self.reduce_factor, luma.shape[0]/self.reduce_factor))
+        image = QImage(luma, luma.shape[1], luma.shape[0],
+                        luma.strides[0], QImage.Format_RGB888)
+        self.image_labels3[1].setPixmap(QPixmap.fromImage(image))
+
+        blendmap = np.uint8(self.blendmap*255)
+        luma = cv2.merge((blendmap,blendmap,blendmap))
+        luma = cv2.resize(luma, (luma.shape[1]/self.reduce_factor, luma.shape[0]/self.reduce_factor))
+        image = QImage(luma, luma.shape[1], luma.shape[0],
+                        luma.strides[0], QImage.Format_RGB888)
+        self.image_labels3[2].setPixmap(QPixmap.fromImage(image))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
