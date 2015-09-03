@@ -38,6 +38,7 @@ class gazetools:
         self.cl_distance_2_point = cl.Program(self.ctx, loadProgram("distance_2_point.cl")).build(build_opts).distance_2_point
         self.cl_subtended_angle = cl.Program(self.ctx, loadProgram("subtended_angle.cl")).build(build_opts).subtended_angle
         self.cl_resmap = cl.Program(self.ctx, loadProgram("resmap.cl")).build(build_opts).resmap
+        self.cl_blend = cl.Program(self.ctx, loadProgram("blend.cl")).build(build_opts).blend
 
     def distance_2_point(self, x, y, rx, ry, sw, sh, ez, ex, ey):
         x = np.array(x, dtype=np.float32, copy=False)
@@ -56,8 +57,9 @@ class gazetools:
         ey_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=ey)
         out_buf = cl.Buffer(self.ctx, cl.mem_flags.WRITE_ONLY, x.nbytes)
         self.cl_distance_2_point(self.queue, x.shape, None, x_buf, y_buf, rx, ry, sw, sh, ez_buf, ex_buf, ey_buf, out_buf)
+        self.queue.finish()
         out = np.empty_like(x)
-        cl.enqueue_read_buffer(self.queue, out_buf, out).wait()
+        cl.enqueue_read_buffer(self.queue, out_buf, out)
         return out
 
     def subtended_angle(self, x1, y1, x2, y2, rx, ry, sw, sh, ez, ex, ey):
@@ -81,19 +83,50 @@ class gazetools:
         ey_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=ey)
         out_buf = cl.Buffer(self.ctx, cl.mem_flags.WRITE_ONLY, x1.nbytes)
         self.cl_subtended_angle(self.queue, x1.shape, None, x1_buf, y1_buf, x2_buf, y2_buf, rx, ry, sw, sh, ez_buf, ex_buf, ey_buf, out_buf)
+        self.queue.finish()
         out = np.empty_like(x1)
-        cl.enqueue_read_buffer(self.queue, out_buf, out).wait()
+        cl.enqueue_read_buffer(self.queue, out_buf, out)
         return out
 
     def resmap(self, ecc, ce):
+        n = np.uint32(ecc.shape[0])
         ecc = np.array(ecc, dtype=np.float32, copy=False)
+        resmap = np.zeros_like(ecc, dtype=np.float32)
+        blendmap = np.zeros_like(ecc, dtype=np.float32)
+        lmap = np.zeros_like(ecc, dtype=np.uint32)
         ce = np.array(ce, dtype=np.float32, copy=False)
         nl = np.uint32(ce.shape[0]-1)
-        ecc_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_WRITE | cl.mem_flags.COPY_HOST_PTR, hostbuf=ecc)
+        var = np.array([0.849, 0.4245, 0.21225, 0.106125, 0.0530625, 0.02653125], dtype=np.float32)
+        ecc_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=ecc)
         ce_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=ce)
-        self.cl_resmap(self.queue, ecc.shape, None, ecc_buf, ce_buf, nl)
-        out = np.empty_like(ecc)
-        cl.enqueue_read_buffer(self.queue, ecc_buf, out).wait()
+        var_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=var)
+        resmap_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_WRITE, resmap.nbytes)
+        blendmap_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_WRITE, blendmap.nbytes)
+        lmap_buf = cl.Buffer(self.ctx, cl.mem_flags.WRITE_ONLY, lmap.nbytes)
+        self.cl_resmap(self.queue, ecc.shape, None, ecc_buf, n, ce_buf, nl, var_buf, resmap_buf, blendmap_buf, lmap_buf)
+        self.queue.finish()
+        cl.enqueue_read_buffer(self.queue, resmap_buf, resmap)
+        cl.enqueue_read_buffer(self.queue, blendmap_buf, blendmap)
+        cl.enqueue_read_buffer(self.queue, lmap_buf, lmap)
+        return resmap, blendmap, lmap
+
+    def blend(self, pyramid, s, blendmap, lmap, x, y):
+        # pyramid = np.array(pyramid, dtype=np.float32, copy=False)
+        # blendmap = np.array(blendmap, dtype=np.float32, copy=False)
+        # lmap = np.array(lmap, dtype=np.uint32, copy=False)
+        w = np.uint32(s[1])
+        h = np.uint32(s[0])
+        x = np.uint32(x)
+        y = np.uint32(y)
+        n = np.uint32(w*h)
+        out = np.zeros(n, dtype=np.uint8)
+        pyramid_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=pyramid)
+        blendmap_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=blendmap)
+        lmap_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=lmap)
+        out_buf = cl.Buffer(self.ctx, cl.mem_flags.WRITE_ONLY, out.nbytes)
+        self.cl_blend(self.queue, (s[1],s[0]), None, pyramid_buf, n, blendmap_buf, lmap_buf, out_buf, w, h, x, y)
+        self.queue.finish()
+        cl.enqueue_read_buffer(self.queue, out_buf, out)
         return out
 
 if __name__ == "__main__":
