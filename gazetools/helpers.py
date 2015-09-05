@@ -1,3 +1,4 @@
-def loadProgram(filename):
-    with open(filename, 'r') as f:
-        return "".join(f.readlines())
+import pkg_resources
+
+def getKernel(filename):
+    return pkg_resources.resource_filename("cl",None), pkg_resources.resource_string("cl",filename)
