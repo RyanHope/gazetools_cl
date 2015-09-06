@@ -12,5 +12,3 @@ class OCLWrapper(object):
             self.ctx = ctx
             inc, src = getKernel(self.__kernel__)
             self.prg = cl.Program(ctx, src).build("-I%s" % inc)
-            print dir(self.prg)
-            print self.prg.kernel_names
