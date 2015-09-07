@@ -8,6 +8,6 @@ from gazetools.visualangle import (
     distance_2_point, subtended_angle
 )
 
-from gazetools.filters import (
-    savgol_coeffs
+from gazetools.filter import (
+    savgol_coeffs, convolve1d
 )
