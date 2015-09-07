@@ -16,7 +16,7 @@ class RGB2YCrCb_OCL(OCLWrapper):
         self.prg.RGB2YCrCb(queue, shape, None, src_buf, dest_buf)
         dest = np.empty_like(src)
         cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=shape).wait()
-        src2_buf.release()
+        src_buf.release()
         dest_buf.release()
         return np.delete(dest, 3, 2)
 RGB2YCrCb = RGB2YCrCb_OCL()
