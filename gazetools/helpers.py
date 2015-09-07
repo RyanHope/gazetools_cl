@@ -11,4 +11,4 @@ class OCLWrapper(object):
         if self.ctx != ctx:
             self.ctx = ctx
             inc, src = getKernel(self.__kernel__)
-            self.prg = cl.Program(ctx, src).build("-I%s" % inc)
+            self.prg = cl.Program(self.ctx, src).build("-I%s" % inc)
