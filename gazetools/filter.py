@@ -14,7 +14,7 @@ def savgol_coeffs(window_length, polyorder, deriv=0, delta=1.0, pos=None):
     if not (0 <= pos < window_length):
         raise ValueError("pos must be nonnegative and less than "
                          "window_length.")
-    x = np.arange(-pos, window_length - pos, dtype=float)[::-1]
+    x = np.arange(-pos, window_length - pos, dtype=np.float32)[::-1]
     order = np.arange(polyorder + 1).reshape(-1, 1)
     if order.size == 1:
         A = np.atleast_2d(x ** order[0, 0])
@@ -38,11 +38,11 @@ class convolve1d_OCL(OCLWrapper):
         kernel_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=kernel)
         dest_buf = cl.Buffer(self.ctx, cl.mem_flags.WRITE_ONLY, src_padded.nbytes)
         queue = cl.CommandQueue(self.ctx)
-        self.prg.convolve1d_naive(queue, (src.shape[0],), None, src_padded_buf, dest_buf, kernel_buf, np.uint32(kernel.shape[0]), np.uint32(halflen))
-        dest = np.empty_like(src_padded)
+        self.prg.convolve1d_naive(queue, src.shape, None, src_padded_buf, dest_buf, kernel_buf, np.uint32(kernel.shape[0]), np.uint32(halflen))
+        dest = np.empty_like(src_padded, dtype=np.float32)
         cl.enqueue_read_buffer(queue, dest_buf, dest).wait()
         src_padded_buf.release()
         kernel_buf.release()
         dest_buf.release()
-        return dest[halflen:-halflen].copy()
+        return dest[halflen:-halflen]
 convolve1d = convolve1d_OCL()
