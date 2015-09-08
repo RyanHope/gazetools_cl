@@ -12,33 +12,13 @@ from gazetools import *
 
 ctx = cl.create_some_context()
 
-smooth = savgol_coeffs(11, 2, 0, 1.0/500.0)
-print smooth
-df=pd.read_csv(pkg_resources.resource_filename("data","smi.csv"))
-# print df.info()
-
-x = np.array(df["smi_sxl"], dtype=np.float32)
-x_np = convolve1d_np(x, smooth)
-x_cl = convolve1d(ctx, x, smooth)
-x_cl2 = convolve1d(ctx, x, smooth)
-
-l = len(x)
-print "================================="
-print x[:11]
-print "---------------------------------"
-print x_np[:11]
-print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-print x_cl[:11]
-print x_cl2[:11]
-print "================================="
-print x[l-11:]
-print "---------------------------------"
-print x_np[l-11:]
-print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-print x_cl[l-11:]
-print x_cl2[l-11:]
-print "================================="
-
-t = np.arange(x.shape[0])
-plt.plot(t,x_cl,'g-',t,x_cl2,'b-')
+src = cv2.cvtColor(cv2.imread(pkg_resources.resource_filename("images","PM5544_with_non-PAL_signals.png"),cv2.IMREAD_UNCHANGED), cv2.COLOR_BGR2RGBA)
+plt.imshow(src)
+kernel = [
+    1/16., 1/8., 1/16.,
+    1/8., 1/4., 1/8.,
+    1/16., 1/8., 1/16.,
+]
+dest = convolve2d(ctx, src, kernel)
+plt.imshow(dest)
 plt.show()

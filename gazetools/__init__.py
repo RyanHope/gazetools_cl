@@ -9,5 +9,5 @@ from gazetools.visualangle import (
 )
 
 from gazetools.filter import (
-    savgol_coeffs, convolve1d
+    savgol_coeffs, convolve1d, convolve2d
 )
