@@ -23,11 +23,12 @@ x_cl = convolve1d(ctx, x, smooth)
 x_cl2 = convolve1d(ctx, x, smooth)
 x_cl3 = convolve1d(ctx, x, smooth)
 
-print x[11:22]
-print x_np[11:22]
-print x_cl[11:22]
-print x_cl2[11:22]
-print x_cl3[11:22]
+l = len(x)
+print x[l-22:]
+print x_np[l-22:]
+print x_cl[l-22:]
+print x_cl2[l-22:]
+print x_cl3[l-22:]
 
 t = np.arange(x.shape[0])
 plt.plot(t,x_cl,'g-',t,x_cl2,'b-',t,x_cl3,'r-')
