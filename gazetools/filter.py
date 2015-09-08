@@ -54,22 +54,23 @@ class convolve2d_OCL(OCLWrapper):
     fmt = cl.ImageFormat(cl.channel_order.RGBA, cl.channel_type.UNSIGNED_INT8)
     def __call__(self, ctx, src, kernel):
         self.build(ctx)
-        halflen = kernel.shape[0] / 2
-        src_padded = np.zeros(src.shape[0]+halflen*2, dtype=np.float32)
-        src_padded[halflen:-halflen] = src
-        src_padded[:halflen] = src[:halflen][::-1]
-        src_padded[src.shape[0]+halflen:] = src[src.shape[0]-halflen:][::-1]
-        src_padded_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=src_padded)
+        src = np.array(src, copy=False, dtype=np.uint8)
         kernel = np.array(kernel, copy=False, dtype=np.float32)
-        shape = (src_padded.shape[1], src_padded.shape[0])
-        src_padded_buf = cl.image_from_array(self.ctx, src_padded, 4)
-        kernel_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=kernel)
+        halflen = kernel.shape[0] / 2
+        kernelf = kernel.flatten()
+        kernelf_length = np.array([kernelf.shape[0]],dtype=np.int_)
+        shape = (src.shape[1], src.shape[0])
+        src_buf = cl.image_from_array(self.ctx, src, 4)
+        kernelf_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=kernelf)
+        kernelf_length_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=kernelf_length)
         dest_buf = cl.Image(self.ctx, cl.mem_flags.WRITE_ONLY, self.fmt, shape=shape)
         queue = cl.CommandQueue(self.ctx)
-        self.prg.BasicConvolve(queue, shape, None, src_buf, kernel_buf, np.int_(kernel.shape[0]), dest_buf)
+        self.prg.BasicConvolve(queue, shape, None, src_buf, kernelf_buf, kernelf_length_buf, dest_buf)
         dest = np.empty_like(src)
         cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=shape).wait()
         src_buf.release()
         dest_buf.release()
-        return np.delete(dest, 3, 2)
+        kernelf_buf.release()
+        kernelf_length_buf.release()
+        return dest
 convolve2d = convolve2d_OCL()
