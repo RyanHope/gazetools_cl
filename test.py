@@ -21,15 +21,24 @@ x = np.array(df["smi_sxl"], dtype=np.float32)
 x_np = convolve1d_np(x, smooth)
 x_cl = convolve1d(ctx, x, smooth)
 x_cl2 = convolve1d(ctx, x, smooth)
-x_cl3 = convolve1d(ctx, x, smooth)
 
 l = len(x)
-print x[l-22:]
-print x_np[l-22:]
-print x_cl[l-22:]
-print x_cl2[l-22:]
-print x_cl3[l-22:]
+print "================================="
+print x[:11]
+print "---------------------------------"
+print x_np[:11]
+print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+print x_cl[:11]
+print x_cl2[:11]
+print "================================="
+print x[l-11:]
+print "---------------------------------"
+print x_np[l-11:]
+print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+print x_cl[l-11:]
+print x_cl2[l-11:]
+print "================================="
 
 t = np.arange(x.shape[0])
-plt.plot(t,x_cl,'g-',t,x_cl2,'b-',t,x_cl3,'r-')
+plt.plot(t,x_cl,'g-',t,x_cl2,'b-')
 plt.show()

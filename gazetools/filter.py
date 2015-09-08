@@ -34,15 +34,17 @@ class convolve1d_OCL(OCLWrapper):
         halflen = kernel.shape[0] / 2
         src_padded = np.zeros(src.shape[0]+halflen*2, dtype=np.float32)
         src_padded[halflen:-halflen] = src
+        src_padded[:halflen] = src[:halflen][::-1]
+        src_padded[src.shape[0]+halflen:] = src[src.shape[0]-halflen:][::-1]
         src_padded_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=src_padded)
         kernel_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=kernel)
-        dest_buf = cl.Buffer(self.ctx, cl.mem_flags.WRITE_ONLY, src_padded.nbytes)
+        dest_buf = cl.Buffer(self.ctx, cl.mem_flags.WRITE_ONLY, src.nbytes)
         queue = cl.CommandQueue(self.ctx)
         self.prg.convolve1d_naive(queue, src.shape, None, src_padded_buf, dest_buf, kernel_buf, np.uint32(kernel.shape[0]), np.uint32(halflen))
-        dest = np.empty_like(src_padded, dtype=np.float32)
+        dest = np.empty_like(src, dtype=np.float32)
         cl.enqueue_read_buffer(queue, dest_buf, dest).wait()
         src_padded_buf.release()
         kernel_buf.release()
         dest_buf.release()
-        return dest[halflen:-halflen]
+        return dest
 convolve1d = convolve1d_OCL()
