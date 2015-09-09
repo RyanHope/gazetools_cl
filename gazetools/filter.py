@@ -51,11 +51,11 @@ convolve1d = convolve1d_OCL()
 
 class convolve2d_OCL(OCLWrapper):
     __kernel__ = "convolve2d.cl"
-    fmt = cl.ImageFormat(cl.channel_order.RGBA, cl.channel_type.UNSIGNED_INT8)
+    fmt = cl.ImageFormat(cl.channel_order.RGBA, cl.channel_type.FLOAT)
     def __call__(self, ctx, src, kernel):
         self.build(ctx)
-        src = np.array(src, copy=False, dtype=np.uint8)
-        kernel = np.array(kernel, copy=False, dtype=np.float32)
+        src = np.array(src, dtype=np.float32)
+        kernel = np.array(kernel, dtype=np.float32)
         halflen = kernel.shape[0] / 2
         kernelf = kernel.flatten()
         kernelf_length = np.array([kernelf.shape[0]],dtype=np.int_)

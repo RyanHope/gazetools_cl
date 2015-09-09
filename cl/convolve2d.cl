@@ -18,27 +18,17 @@ __kernel void BasicConvolve(__read_only  image2d_t imgSrc,
    int y = get_global_id(1);
 
    float4 convPix = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
-   float4 temp;
-   uint4 pix;
-
-   int2 coords;
 
    for (int i = 0; i < w; i++)
    {
        for (int j = 0; j < w; j++)
        {
-          coords.x = x+i; coords.y = y+j;
-
-          pix = read_imageui(imgSrc, smp, coords);
-          temp = (float4)((float)pix.x, (float)pix.y, (float)pix.z, (float)pix.w);
-
-          convPix += temp * kernelValues[i + w*j];
+          convPix += read_imagef(imgSrc, smp, (int2)(x+i,y+j)) * kernelValues[i + w*j];
        }
    }
 
-   coords.x = x + (w>>1); coords.y = y + (w>>1);
-   pix = (uint4)((uint)convPix.x, (uint)convPix.y, (uint)convPix.z, (uint)convPix.w);
-   write_imageui(imgConvolved, coords, pix);
+  //  pix = (uint4)((uint)convPix.x, (uint)convPix.y, (uint)convPix.z, (uint)convPix.w);
+   write_imagef(imgConvolved, (int2)(x + (w>>1), y + (w>>1)), convPix);
 }
 
 __kernel void ConvolveConst(__read_only  image2d_t imgSrc,
