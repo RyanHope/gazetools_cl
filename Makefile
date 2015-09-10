@@ -1,8 +1,10 @@
-all:
-	python setup.py build sdist
+all: dist
 
-install:
-	python setup.py install
+dist:
+	python setup.py sdist
+
+install: dist
+	pip install dist/gazetools-*.tar.gz
 
 clean:
 	rm -rf dist build gazetools.egg* MANIFEST
