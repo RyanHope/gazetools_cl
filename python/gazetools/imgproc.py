@@ -41,6 +41,9 @@ class RGB2YCrCb_OCL(OCLWrapper):
         dest_buf.release()
         return dest
 RGB2YCrCb = RGB2YCrCb_OCL()
+"""
+RGB2YCrCb is a function-like object.
+"""
 
 class YCrCb2RGB_OCL(OCLWrapper):
     __kernel__ = "YCrCb2RGB.cl"
@@ -61,3 +64,6 @@ class YCrCb2RGB_OCL(OCLWrapper):
         dest_buf.release()
         return dest
 YCrCb2RGB = YCrCb2RGB_OCL()
+"""
+YCrCb2RGB is a function-like object.
+"""

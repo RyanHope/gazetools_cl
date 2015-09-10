@@ -19,14 +19,40 @@
 import pkg_resources, os
 import pyopencl as cl
 
+import sys
+from types import MethodType
+
 def getKernel(filename):
     return pkg_resources.resource_filename(__name__,"resources/cl"), pkg_resources.resource_string(__name__,os.path.join('resources/cl',filename))
 
 class OCLWrapper(object):
+
     def __init__(self):
         self.ctx = None
+
     def build(self, ctx):
         if self.ctx != ctx:
             self.ctx = ctx
             inc, src = getKernel(self.__kernel__)
             self.prg = cl.Program(self.ctx, src).build("-I%s" % inc)
+
+    if sys.version_info < (3, 4):
+        def argspecobjs(self):
+            yield '__call__', self.__call__
+    else:
+        def argspecobjs(self):
+            yield '__call__', self
+
+    def omitted_args(self, name, method):
+		if isinstance(self.__call__, MethodType):
+			return (0,)
+		else:
+			return ()
+
+    @staticmethod
+    def additional_args():
+        return ()
+
+def with_docstring(instance, doc):
+	instance.__doc__ = doc
+	return instance

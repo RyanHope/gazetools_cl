@@ -60,3 +60,6 @@ target/
 
 # iPython
 .ipynb_checkpoints
+
+# Sphinx
+python/docs/_build
