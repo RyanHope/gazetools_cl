@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import sys,os
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),"../python"))
+
 import pkg_resources
 import pyopencl as cl
 import numpy as np
@@ -17,7 +20,8 @@ kernel = [
     [1/8., 1/4., 1/8.],
     [1/16., 1/8., 1/16.],
 ]
-src = cv2.cvtColor(cv2.imread(pkg_resources.resource_filename("images","PM5544_with_non-PAL_signals.png"),cv2.IMREAD_UNCHANGED), cv2.COLOR_BGR2RGBA)
+src = cv2.cvtColor(cv2.imread(pkg_resources.resource_filename("gazetools","resources/images/PM5544_with_non-PAL_signals.png"),cv2.IMREAD_UNCHANGED), cv2.COLOR_BGR2RGBA)
+print src
 dest1 = convolve2d(ctx, src, kernel)
 dest2 = convolve2d(ctx, src, kernel)
 print "==============================="
