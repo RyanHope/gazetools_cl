@@ -6,36 +6,40 @@ import os
 
 class RGB2YCrCb_OCL(OCLWrapper):
     __kernel__ = "RGB2YCrCb.cl"
-    fmt = cl.ImageFormat(cl.channel_order.RGBA, cl.channel_type.UNSIGNED_INT8)
-    def __call__(self, ctx, src):
+    def __call__(self, ctx, src2):
         self.build(ctx)
-        shape = (src.shape[1], src.shape[0])
-        src_buf = cl.image_from_array(self.ctx, src, 4)
-        dest_buf = cl.Image(self.ctx, cl.mem_flags.WRITE_ONLY, self.fmt, shape=shape)
-        queue = cl.CommandQueue(self.ctx)
-        self.prg.RGB2YCrCb(queue, shape, None, src_buf, dest_buf)
+        src2 = np.asarray(src2)
+        src = np.zeros((src2.shape[0], src2.shape[1], 4),dtype=src2.dtype)
+        src[:,:,0:src2.shape[2]] = src2[:,:,0:src2.shape[2]]
+        norm = np.issubdtype(src.dtype, np.integer)
+        src_buf = cl.image_from_array(self.ctx, src, 4, norm_int=norm)
+        dest_buf = cl.image_from_array(self.ctx, src, 4, mode="w", norm_int=norm)
         dest = np.empty_like(src)
-        cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=shape).wait()
+        queue = cl.CommandQueue(self.ctx)
+        self.prg.RGB2YCrCb(queue, (src.shape[1], src.shape[0]), None, src_buf, dest_buf)
+        cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=(src.shape[1], src.shape[0])).wait()
+        dest = dest[:,:,0:src2.shape[2]].copy()
         src_buf.release()
         dest_buf.release()
-        return np.delete(dest, 3, 2)
+        return dest
 RGB2YCrCb = RGB2YCrCb_OCL()
 
 class YCrCb2RGB_OCL(OCLWrapper):
     __kernel__ = "YCrCb2RGB.cl"
-    fmt = cl.ImageFormat(cl.channel_order.RGBA, cl.channel_type.UNSIGNED_INT8)
-    def __call__(self, ctx, src):
+    def __call__(self, ctx, src2):
         self.build(ctx)
-        shape = (src.shape[1], src.shape[0])
-        src2 = np.zeros((src.shape[0],src.shape[1],src.shape[2]+1),dtype=np.uint8)
-        src2[:,:,0:3] = src
-        src2_buf = cl.image_from_array(self.ctx, src2, 4)
-        dest_buf = cl.Image(self.ctx, cl.mem_flags.WRITE_ONLY, self.fmt, shape=shape)
+        src2 = np.asarray(src2)
+        src = np.zeros((src2.shape[0], src2.shape[1], 4),dtype=src2.dtype)
+        src[:,:,0:src2.shape[2]] = src2[:,:,0:src2.shape[2]]
+        norm = np.issubdtype(src.dtype, np.integer)
+        src_buf = cl.image_from_array(self.ctx, src, 4, norm_int=norm)
+        dest_buf = cl.image_from_array(self.ctx, src, 4, mode="w", norm_int=norm)
+        dest = np.empty_like(src)
         queue = cl.CommandQueue(self.ctx)
-        self.prg.YCrCb2RGB(queue, shape, None, src2_buf, dest_buf)
-        dest = np.empty_like(src2)
-        cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=shape).wait()
-        src2_buf.release()
+        self.prg.YCrCb2RGB(queue, (src.shape[1], src.shape[0]), None, src_buf, dest_buf)
+        cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=(src.shape[1], src.shape[0])).wait()
+        dest = dest[:,:,0:src2.shape[2]].copy()
+        src_buf.release()
         dest_buf.release()
-        return np.delete(dest, 3, 2)
+        return dest
 YCrCb2RGB = YCrCb2RGB_OCL()

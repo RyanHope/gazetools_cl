@@ -2,12 +2,9 @@
 __kernel void YCrCb2RGB(__read_only image2d_t srcImg, __write_only image2d_t dstImg)
 {
   int2 pos = (int2)(get_global_id(0), get_global_id(1));
-  uint4 yuv = read_imageui(srcImg, pos);
-  float Ey = yuv.x;
-  float Ecr = yuv.y;
-  float Ecb = yuv.z;
-  uchar R = 1.000f * Ey + 0.000f * (Ecb-128) + 1.400f * (Ecr-128);
-  uchar G = 1.000f * Ey - 0.343f * (Ecb-128) - 0.711f * (Ecr-128);
-  uchar B = 1.000f * Ey + 1.765f * (Ecb-128) + 0.000f * (Ecr-128);
-  write_imageui(dstImg, pos, (uint4)(R, G, B, 0));
+  float4 yuv = read_imagef(srcImg, pos);
+  float R = 1.000f * yuv.x + 0.000f * (yuv.z-.5f) + 1.400f * (yuv.y-.5f);
+  float G = 1.000f * yuv.x - 0.343f * (yuv.z-.5f) - 0.711f * (yuv.y-.5f);
+  float B = 1.000f * yuv.x + 1.765f * (yuv.z-.5f) + 0.000f * (yuv.y-.5f);
+  write_imagef(dstImg, pos, (float4)(R, G, B, 0));
 }
