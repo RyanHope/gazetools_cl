@@ -3,10 +3,7 @@ language: python
 python:
   - "2.7"
 
-addons:
-   apt:
-      packages:
-         - fglrx=2:8.960-0ubuntu1
-         - opencl-headers
-
-install: "pip install -r requirements.txt"
+install:
+  - sudo apt-get update
+  - sudo apt-get install fglrx opencl-headers
+  pip install -r requirements.txt
