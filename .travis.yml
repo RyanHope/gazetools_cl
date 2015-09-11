@@ -10,5 +10,3 @@ addons:
          - opencl-headers
 
 install: "pip install -r requirements.txt"
-
-sudo: false
