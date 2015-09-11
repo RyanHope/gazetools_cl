@@ -1,7 +1,12 @@
 language: python
+
 python:
   - "2.7"
+
 install: "pip install -r requirements.txt"
+
 before_install:
    - sudo apt-get update -qq
    - sudo apt-get install -qq fglrx=2:8.960-0ubuntu1 opencl-headers
+
+sudo: false
