@@ -7,9 +7,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),"../"
 
 extensions = [
     'gazetools_autodoc',
+    'numpydoc',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
-    'sphinx.ext.viewcode',
+    'sphinx.ext.viewcode'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

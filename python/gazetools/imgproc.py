@@ -24,46 +24,79 @@ import os
 
 class RGB2YCrCb_OCL(OCLWrapper):
     __kernel__ = "RGB2YCrCb.cl"
-    def __call__(self, ctx, src2):
+    def __call__(self, ctx, src):
         self.build(ctx)
-        src2 = np.asarray(src2)
-        src = np.zeros((src2.shape[0], src2.shape[1], 4),dtype=src2.dtype)
-        src[:,:,0:src2.shape[2]] = src2[:,:,0:src2.shape[2]]
-        norm = np.issubdtype(src.dtype, np.integer)
-        src_buf = cl.image_from_array(self.ctx, src, 4, norm_int=norm)
-        dest_buf = cl.image_from_array(self.ctx, src, 4, mode="w", norm_int=norm)
-        dest = np.empty_like(src)
+        src = np.asarray(src)
+        src2 = np.zeros((src.shape[0], src.shape[1], 4),dtype=src.dtype)
+        src2[:,:,0:src.shape[2]] = src[:,:,0:src.shape[2]]
+        norm = np.issubdtype(src2.dtype, np.integer)
+        src2_buf = cl.image_from_array(self.ctx, src2, 4, norm_int=norm)
+        dest_buf = cl.image_from_array(self.ctx, src2, 4, mode="w", norm_int=norm)
+        dest = np.empty_like(src2)
         queue = cl.CommandQueue(self.ctx)
-        self.prg.RGB2YCrCb(queue, (src.shape[1], src.shape[0]), None, src_buf, dest_buf)
-        cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=(src.shape[1], src.shape[0])).wait()
-        dest = dest[:,:,0:src2.shape[2]].copy()
-        src_buf.release()
+        self.prg.RGB2YCrCb(queue, (src2.shape[1], src2.shape[0]), None, src2_buf, dest_buf)
+        cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=(src2.shape[1], src2.shape[0])).wait()
+        dest = dest[:,:,0:src.shape[2]].copy()
+        src2_buf.release()
         dest_buf.release()
         return dest
 RGB2YCrCb = RGB2YCrCb_OCL()
 """
-RGB2YCrCb is a function-like object.
+Converts a RGB image to the full range YCrCb colorspace.
+
+Parameters
+----------
+ctx : pyopencl.Contex
+    An OpenCL context.
+src : numpy.ndarray
+    A RGB or RGBA image.
+
+Returns
+-------
+numpy.ndarray
+    A YCrCb image.
+
+See Also
+--------
+YCrCb2RGB
 """
+
 
 class YCrCb2RGB_OCL(OCLWrapper):
     __kernel__ = "YCrCb2RGB.cl"
-    def __call__(self, ctx, src2):
+    def __call__(self, ctx, src):
         self.build(ctx)
-        src2 = np.asarray(src2)
-        src = np.zeros((src2.shape[0], src2.shape[1], 4),dtype=src2.dtype)
-        src[:,:,0:src2.shape[2]] = src2[:,:,0:src2.shape[2]]
-        norm = np.issubdtype(src.dtype, np.integer)
-        src_buf = cl.image_from_array(self.ctx, src, 4, norm_int=norm)
-        dest_buf = cl.image_from_array(self.ctx, src, 4, mode="w", norm_int=norm)
-        dest = np.empty_like(src)
+        src = np.asarray(src)
+        src2 = np.zeros((src.shape[0], src.shape[1], 4),dtype=src.dtype)
+        src2[:,:,0:src.shape[2]] = src[:,:,0:src.shape[2]]
+        norm = np.issubdtype(src2.dtype, np.integer)
+        src2_buf = cl.image_from_array(self.ctx, src2, 4, norm_int=norm)
+        dest_buf = cl.image_from_array(self.ctx, src2, 4, mode="w", norm_int=norm)
+        dest = np.empty_like(src2)
         queue = cl.CommandQueue(self.ctx)
-        self.prg.YCrCb2RGB(queue, (src.shape[1], src.shape[0]), None, src_buf, dest_buf)
-        cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=(src.shape[1], src.shape[0])).wait()
-        dest = dest[:,:,0:src2.shape[2]].copy()
-        src_buf.release()
+        self.prg.YCrCb2RGB(queue, (src2.shape[1], src2.shape[0]), None, src2_buf, dest_buf)
+        cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=(src2.shape[1], src2.shape[0])).wait()
+        dest = dest[:,:,0:src.shape[2]].copy()
+        src2_buf.release()
         dest_buf.release()
         return dest
 YCrCb2RGB = YCrCb2RGB_OCL()
 """
-YCrCb2RGB is a function-like object.
+Converts a full range YCrCb image to the RGB colorspace.
+
+Parameters
+----------
+ctx : pyopencl.Contex
+    An OpenCL context.
+src : numpy.ndarray
+    A YCrCb image.
+
+Returns
+-------
+numpy.ndarray
+    A RGB image.
+
+See Also
+--------
+RGB2YCrCb
 """
