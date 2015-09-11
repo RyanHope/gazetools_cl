@@ -43,22 +43,6 @@ class RGB2YCrCb_OCL(OCLWrapper):
 RGB2YCrCb = RGB2YCrCb_OCL()
 """
 Converts a RGB image to the full range YCrCb colorspace.
-
-Parameters
-----------
-ctx : pyopencl.Contex
-    An OpenCL context.
-src : numpy.ndarray
-    A RGB or RGBA image.
-
-Returns
--------
-numpy.ndarray
-    A YCrCb image.
-
-See Also
---------
-YCrCb2RGB
 """
 
 
@@ -83,20 +67,4 @@ class YCrCb2RGB_OCL(OCLWrapper):
 YCrCb2RGB = YCrCb2RGB_OCL()
 """
 Converts a full range YCrCb image to the RGB colorspace.
-
-Parameters
-----------
-ctx : pyopencl.Contex
-    An OpenCL context.
-src : numpy.ndarray
-    A YCrCb image.
-
-Returns
--------
-numpy.ndarray
-    A RGB image.
-
-See Also
---------
-RGB2YCrCb
 """

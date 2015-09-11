@@ -22,7 +22,7 @@ install:
 
 script:
   - nosetests
-  - travis-sphinx build --source=python/docs
+  - travis-sphinx --source=python/docs build
 
 after_success:
   - travis-sphinx deploy
