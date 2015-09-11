@@ -6,7 +6,7 @@ python:
 addons:
    apt:
       packages:
-         - fglrx
+         - fglrx=2:8.960-0ubuntu1
          - opencl-headers
 
 install: "pip install -r requirements.txt"
