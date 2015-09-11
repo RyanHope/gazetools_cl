@@ -6,4 +6,4 @@ python:
 install:
   - sudo apt-get update
   - sudo apt-get install fglrx opencl-headers
-  pip install -r requirements.txt
+  - pip install -r requirements.txt
