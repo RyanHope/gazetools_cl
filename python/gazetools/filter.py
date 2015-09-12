@@ -21,6 +21,12 @@ from .helpers import OCLWrapper
 import pyopencl as cl
 import numpy as np
 
+kernel_gaussian3x3 = [
+    [1/16., 1/8., 1/16.],
+    [1/8., 1/4., 1/8.],
+    [1/16., 1/8., 1/16.],
+]
+
 def savgol_coeffs(window_length, polyorder, deriv=0, delta=1.0, pos=None):
     if polyorder >= window_length:
         raise ValueError("polyorder must be less than window_length.")

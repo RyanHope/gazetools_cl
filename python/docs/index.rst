@@ -16,7 +16,6 @@ Contents
   :caption: Modules
 
   gazetools.filter
-  gazetools.helpers
   gazetools.imgproc
   gazetools.visualangle
 
