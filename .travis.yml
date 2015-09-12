@@ -27,4 +27,5 @@ script:
   - travis-sphinx --source=python/docs build
 
 after_success:
+  - coveralls
   - travis-sphinx deploy
