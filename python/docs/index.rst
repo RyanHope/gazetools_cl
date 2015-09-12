@@ -1,23 +1,27 @@
-*********
-Gazetools
-*********
+Welcome to the Gazetools documentation page!
+============================================
+
+Contents
+--------
 
 .. toctree::
-   :maxdepth: 3
-   :glob:
+  :caption: Getting Started
+  :maxdepth: 2
 
-   overview
-   installation
+  overview
+  installation
+
+.. toctree::
+  :maxdepth: 2
+  :caption: Modules
+
+  modules/imgproc
+  modules/filter
+  modules/visualangle
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-.. toctree::
-   :maxdepth: 3
-   :glob:
-
-   gazetools
