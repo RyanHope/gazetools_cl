@@ -1,5 +1,5 @@
-gazetools.filter module
-=======================
+gazetools.filter
+================
 
 .. automodule:: gazetools.filter
     :members:

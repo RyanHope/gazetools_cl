@@ -1,5 +1,5 @@
-gazetools.helpers module
-========================
+gazetools.helpers
+=================
 
 .. automodule:: gazetools.helpers
     :members:

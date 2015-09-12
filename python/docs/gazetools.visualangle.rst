@@ -1,5 +1,5 @@
-gazetools.visualangle module
-============================
+gazetools.visualangle
+=====================
 
 .. automodule:: gazetools.visualangle
     :members:

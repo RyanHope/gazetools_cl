@@ -15,7 +15,10 @@ Contents
   :maxdepth: 2
   :caption: Modules
 
-  modules
+  gazetools.filter
+  gazetools.helpers
+  gazetools.imgproc
+  gazetools.visualangle
 
 Indices and tables
 ------------------

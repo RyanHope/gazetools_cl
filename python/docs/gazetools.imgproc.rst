@@ -1,5 +1,5 @@
-gazetools.imgproc module
-========================
+gazetools.imgproc
+=================
 
 .. automodule:: gazetools.imgproc
     :members:
