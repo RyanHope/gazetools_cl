@@ -15,9 +15,7 @@ Contents
   :maxdepth: 2
   :caption: Modules
 
-  modules/imgproc
-  modules/filter
-  modules/visualangle
+  modules
 
 Indices and tables
 ------------------
