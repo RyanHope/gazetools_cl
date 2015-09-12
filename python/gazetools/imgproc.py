@@ -54,7 +54,6 @@ Converts a RGB image to the full range YCrCb colorspace.
 .. seealso:: `YCrCb2RGB`
 """
 
-
 class YCrCb2RGB_OCL(OCLWrapper):
     __kernel__ = "YCrCb2RGB.cl"
     def __call__(self, ctx, src):
