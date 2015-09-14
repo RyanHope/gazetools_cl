@@ -23,9 +23,12 @@ from gazetools.imgproc import (
 )
 
 from gazetools.visualangle import (
-    distance_2_point, subtended_angle
+    distance_2_point,
+    subtended_angle, subtended_angle2
 )
 
 from gazetools.filter import (
-    savgol_coeffs, convolve1d, convolve2d
+    kernel_gaussian3x3,
+    savgol_coeffs,
+    convolve1d, convolve2d
 )

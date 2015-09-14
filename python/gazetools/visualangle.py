@@ -78,7 +78,7 @@ class subtended_angle_OCL(OCLWrapper):
         ey_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=ey)
         out_buf = cl.Buffer(self.ctx, cl.mem_flags.WRITE_ONLY, x1.nbytes)
         queue = cl.CommandQueue(self.ctx)
-        self.prg.subtended_angle(queue, x1.shape, None, x1_buf, y1_buf, x2_buf, y2_buf, rx, ry, sw, sh, ez_buf, ex_buf, ey_buf, out_buf)
+        self.prg.subtended_angle_naive(queue, x1.shape, None, x1_buf, y1_buf, x2_buf, y2_buf, rx, ry, sw, sh, ez_buf, ex_buf, ey_buf, out_buf)
         out = np.empty_like(x1)
         cl.enqueue_read_buffer(queue, out_buf, out).wait()
         x1_buf.release()
@@ -91,3 +91,31 @@ class subtended_angle_OCL(OCLWrapper):
         out_buf.release()
         return out
 subtended_angle = subtended_angle_OCL()
+
+class subtended_angle2_OCL(OCLWrapper):
+    __kernel__ = "subtended_angle.cl"
+    def __call__(self, ctx, x1, y1, x2, y2, rx, ry, sw, sh, ez, ex, ey):
+        self.build(ctx)
+        x1 = np.array(x1, dtype=np.float32, copy=False)
+        y1 = np.array(y1, dtype=np.float32, copy=False)
+        x2 = np.float32(x2)
+        y2 = np.float32(y2)
+        ez = np.float32(ez)
+        ex = np.float32(ex)
+        ey = np.float32(ey)
+        rx = np.float32(rx)
+        ry = np.float32(ry)
+        sw = np.float32(sw)
+        sh = np.float32(sh)
+        x1_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=x1)
+        y1_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=y1)
+        out_buf = cl.Buffer(self.ctx, cl.mem_flags.WRITE_ONLY, x1.nbytes)
+        queue = cl.CommandQueue(self.ctx)
+        self.prg.subtended_angle2_naive(queue, x1.shape, None, x1_buf, y1_buf, x2, y2, rx, ry, sw, sh, ez, ex, ey, out_buf)
+        out = np.empty_like(x1)
+        cl.enqueue_read_buffer(queue, out_buf, out).wait()
+        x1_buf.release()
+        y1_buf.release()
+        out_buf.release()
+        return out
+subtended_angle2 = subtended_angle2_OCL()
