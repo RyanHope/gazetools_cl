@@ -26,6 +26,6 @@ script:
   - travis-sphinx --source=python/docs build
   - nosetests --cover-erase --with-coverage --cover-package=gazetools python/gazetools/tests
 
-after_success:
+after_script:
   - coveralls
   - travis-sphinx deploy
