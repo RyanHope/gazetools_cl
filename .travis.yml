@@ -24,7 +24,7 @@ install:
 
 script:
   - export PYOPENCL_TEST="intel(r):pu"
-  - nosetests --with-coverage --cover-package=python/gazetools python/gazetools/tests
+  - nosetests --with-coverage --cover-package=gazetools python/gazetools/tests
   - travis-sphinx --source=python/docs build
 
 after_success:
