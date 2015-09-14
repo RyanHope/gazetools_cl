@@ -19,11 +19,11 @@ def test_RGB2YCrCb2RGB_uint8():
     src1 = np.asarray(Image.open(test_image))
     ycrcb = RGB2YCrCb(ctx, src1)
     rgb = YCrCb2RGB(ctx, ycrcb)
-    assert np.array_equal(src1, rgb)
+    np.testing.assert_almost_equal(src1, rgb)
 
 def test_RGB2YCrCb2RGB_float32():
     ctx = cl.create_some_context(0)
     src2 = mpimg.imread(test_image)
     ycrcb = RGB2YCrCb(ctx, src2)
     rgb = YCrCb2RGB(ctx, ycrcb)
-    assert np.array_equal(src2, rgb)
+    np.testing.assert_almost_equal(src2, rgb)
