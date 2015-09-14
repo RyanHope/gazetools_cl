@@ -47,7 +47,7 @@ def savgol_coeffs(window_length, polyorder, deriv=0, delta=1.0, pos=None):
     y = np.zeros(polyorder + 1)
     y[deriv] = np.math.factorial(deriv) / (delta ** deriv)
     coeffs, _, _, _ = np.linalg.lstsq(A, y)
-    return coeffs
+    return np.array(coeffs,dtype=np.float32)
 
 class convolve1d_OCL(OCLWrapper):
     __kernel__ = "convolve1d.cl"
