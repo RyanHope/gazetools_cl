@@ -23,8 +23,8 @@ install:
   - pip install .
 
 script:
-  - nosetests --collect-only --cover-erase --with-coverage --cover-package=gazetools python/gazetools/tests
   - travis-sphinx --source=python/docs build
+  - nosetests --cover-erase --with-coverage --cover-package=gazetools python/gazetools/tests
 
 after_success:
   - coveralls
