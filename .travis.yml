@@ -24,6 +24,7 @@ install:
 
 script:
   - travis-sphinx --source=python/docs build
+  - export COMPUTE=:0
   - nosetests --cover-erase --with-coverage --cover-package=gazetools python/gazetools/tests
 
 after_script:
