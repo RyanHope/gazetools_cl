@@ -21,19 +21,19 @@ from .helpers import OCLWrapper
 import pyopencl as cl
 import numpy as np
 
-kernel_gaussian3x3 = [
+kernel_gaussian3x3 = np.array([
     [1/16., 2/16., 1/16.],
     [2/16., 4/16., 2/8.],
     [1/16., 2/16., 1/16.],
-]
+], dtype=np.float32)
 
-kernel_gaussian5x5 = [
+kernel_gaussian5x5 = np.array([
     [1/256., 4/256., 6/256., 4/256., 1/256.],
     [4/256., 16/256., 24/256., 16/256., 4/256.],
     [6/256., 24/256., 36/256., 24/256., 6/256.],
     [4/256., 16/256., 24/256., 16/256., 4/256.],
     [1/256., 4/256., 6/256., 4/256., 1/256.],
-]
+], dtype=np.float32)
 
 def savgol_coeffs(window_length, polyorder, deriv=0, delta=1.0, pos=None):
     if polyorder >= window_length:
@@ -116,3 +116,36 @@ class convolve2d_OCL(OCLWrapper):
         kernelf_buf.release()
         return dest
 convolve2d = convolve2d_OCL()
+
+"""
+Blurs an image and downsamples it.
+
+:param ctx: an OpenCL context
+:param src: an image
+:type ctx: pyopencl._cl.Context
+:type src: numpy.ndarray
+:returns: `src` downsampled to 1/4 of it's orignal area
+:rtype: numpy.ndarray
+
+.. seealso:: `pyrUp`
+"""
+def pyrDown(ctx, src):
+    down = convolve2d(ctx, src, kernel_gaussian5x5)
+    return down[1::2,1::2,:]
+
+"""
+Upsamples an image and then blurs it.
+
+:param ctx: an OpenCL context
+:param src: an image
+:type ctx: pyopencl._cl.Context
+:type src: numpy.ndarray
+:returns: `src` upsampled to 4 times it's original area
+:rtype: numpy.ndarray
+
+.. seealso:: `pyrDown`
+"""
+def pyrUp(ctx, src):
+    up = np.zeros((src.shape[0]*2,src.shape[1]*2,src.shape[2]),dtype=src.dtype)
+    up[1::2,1::2,:] = src
+    return convolve2d(ctx, up, 4*kernel_gaussian5x5)
