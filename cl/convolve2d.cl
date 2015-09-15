@@ -21,6 +21,9 @@ __kernel void convolve2d_naive(__read_only  image2d_t imgSrc,
                                __constant   float *   kernelValues,
                                             int       w)
 {
+  // This kernel expects imgSrc to the mirror padded to the half kernel length,
+  // imgConvolved should be the same dimensions as the original unpadded image.
+
   int x = get_global_id(0);
   int y = get_global_id(1);
 
