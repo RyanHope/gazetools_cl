@@ -28,7 +28,7 @@ from gazetools.visualangle import (
 )
 
 from gazetools.filter import (
-    kernel_gaussian3x3,
+    kernel_gaussian3x3, kernel_gaussian5x5,
     savgol_coeffs,
     convolve1d, convolve2d
 )
