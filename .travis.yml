@@ -14,11 +14,12 @@ before_install:
 
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy sphinx
+  - conda install --yes -c https://conda.binstar.org/asmeurer pandoc
   - sudo apt-get update -qq
   - sudo apt-get install -qq fglrx=2:8.960-0ubuntu1 opencl-headers
   - pip install --user git+https://github.com/Syntaf/travis-sphinx.git
   - pip install coveralls
-  - pip install pillow matplotlib
+  - pip install pillow matplotlib ipython
   - pip install pyopencl
   - pip install .
 
