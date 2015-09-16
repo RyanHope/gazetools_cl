@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import sys,os
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),"../python"))
 
@@ -15,22 +13,17 @@ from gazetools import *
 
 ctx = cl.create_some_context(answers=[0,1])
 
-#orig = np.asarray(Image.open(pkg_resources.resource_filename("gazetools", "resources/images/PM5544_with_non-PAL_signals.png")))
-orig = mpimg.imread(pkg_resources.resource_filename("gazetools", "resources/images/PM5544_with_non-PAL_signals.png"))
+df=pd.read_csv(pkg_resources.resource_filename("gazetools","resources/data/smi.csv"))
+smooth = savgol_coeffs(11, 2, 0, 1.0/500.0)
 
-down1 = pyrDown(ctx, orig)
-down2 = pyrDown(ctx, down1)
-down3 = pyrDown(ctx, down2)
-down4 = pyrDown(ctx, down3)
-down5 = pyrDown(ctx, down4)
+gaze = np.array(df[["smi_sxl","smi_sxr","smi_syl","smi_syr"]],dtype=np.float32)
+gaze = gaze.reshape(gaze.shape[0],1,gaze.shape[1]).copy()
 
-combined = np.zeros((orig.shape[0]+orig.shape[0]/2,orig.shape[1],orig.shape[2]),dtype=orig.dtype)
-combined[:orig.shape[0],:orig.shape[1],:] = orig
-combined[orig.shape[0]:orig.shape[0]+down1.shape[0],:down1.shape[1],:] = down1
-combined[orig.shape[0]+down2.shape[0]:orig.shape[0]+2*down2.shape[0],down1.shape[1]:down1.shape[1]+down2.shape[1]] = down2
-combined[orig.shape[0]+down2.shape[0]+down3.shape[0]:orig.shape[0]+2*down2.shape[0]+2*down3.shape[0],down1.shape[1]+down2.shape[1]:down1.shape[1]+down2.shape[1]+down3.shape[1]] = down3
-combined[orig.shape[0]+down2.shape[0]+down3.shape[0]+down4.shape[0]:orig.shape[0]+2*down2.shape[0]+2*down3.shape[0]+2*down4.shape[0],down1.shape[1]+down2.shape[1]+down3.shape[1]:down1.shape[1]+down2.shape[1]+down3.shape[1]+down4.shape[1]] = down4
-combined[orig.shape[0]+down2.shape[0]+down3.shape[0]+down4.shape[0]+down5.shape[0]:orig.shape[0]+2*down2.shape[0]+2*down3.shape[0]+2*down4.shape[0]+2*down5.shape[0],down1.shape[1]+down2.shape[1]+down3.shape[1]+down4.shape[1]:down1.shape[1]+down2.shape[1]+down3.shape[1]+down4.shape[1]+down5.shape[1]] = down5
+gaze_smoothed = convolve1d(ctx, gaze, smooth)
 
-plt.imshow(combined)
+# x_cl1 = convolve1d(ctx, x, smooth)
+#
+t = np.arange(gaze_smoothed.shape[0])
+plt.figure(1)
+plt.plot(t,gaze[:,0,0],'r-',t,gaze_smoothed[:,0,0],'b-')
 plt.show()

@@ -61,23 +61,34 @@ class convolve1d_OCL(OCLWrapper):
     __kernel__ = "convolve1d.cl"
     def __call__(self, ctx, src, kernel):
         self.build(ctx)
-        src = np.array(src, copy=False, dtype=np.float32)
         kernel = np.array(kernel, copy=False, dtype=np.float32)
         halflen = kernel.shape[0] / 2
-        src_padded = np.zeros(src.shape[0]+halflen*2, dtype=np.float32)
-        src_padded[halflen:-halflen] = src
-        src_padded[:halflen] = src[:halflen][::-1]
-        src_padded[src.shape[0]+halflen:] = src[src.shape[0]-halflen:][::-1]
-        src_padded_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=src_padded)
         kernel_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=kernel)
-        dest_buf = cl.Buffer(self.ctx, cl.mem_flags.WRITE_ONLY, src.nbytes)
+
+        src = np.asarray(src)
+        src_padded = np.zeros((src.shape[0]+2*halflen, src.shape[1]+2*halflen, 4), dtype=src.dtype)
+        src_padded[halflen:-halflen,halflen:-halflen,:src.shape[2]] = src[:,:,:src.shape[2]]
+
+        src_padded[halflen:-halflen,:halflen,:src.shape[2]] = src_padded[halflen:-halflen,halflen:halflen*2,:src.shape[2]][:,::-1]
+        src_padded[halflen:-halflen,-halflen:,:src.shape[2]] = src_padded[halflen:-halflen,-halflen*2:-halflen,:src.shape[2]][:,::-1]
+
+        src_padded[:halflen,:,:src.shape[2]] = src_padded[halflen:halflen*2,:,:src.shape[2]][::-1,...]
+        src_padded[-halflen:,:,:src.shape[2]] = src_padded[-halflen*2:-halflen,:,:src.shape[2]][::-1,...]
+
+        norm = np.issubdtype(src.dtype, np.integer)
+        src_buf = cl.image_from_array(self.ctx, src_padded, 4, norm_int=norm)
+        dest = np.zeros((src.shape[0], src.shape[1], 4), dtype=src.dtype)
+        dest_buf = cl.image_from_array(self.ctx, dest, 4, mode="w", norm_int=norm)
+
         queue = cl.CommandQueue(self.ctx)
-        self.prg.convolve1d_naive(queue, src.shape, None, src_padded_buf, dest_buf, kernel_buf, np.uint32(kernel.shape[0]), np.uint32(halflen))
-        dest = np.empty_like(src, dtype=np.float32)
-        cl.enqueue_read_buffer(queue, dest_buf, dest).wait()
-        src_padded_buf.release()
-        kernel_buf.release()
+        self.prg.convolve1d_naive(queue, (dest.shape[1], dest.shape[0]), None, src_buf, dest_buf, kernel_buf, np.int32(kernel.shape[0]))
+        cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=(src.shape[1], src.shape[0])).wait()
+
+        dest = dest[:,:,:src.shape[2]].copy()
+
+        src_buf.release()
         dest_buf.release()
+        kernel_buf.release()
         return dest
 convolve1d = convolve1d_OCL()
 
