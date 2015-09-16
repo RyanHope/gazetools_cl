@@ -65,9 +65,16 @@ class convolve1d_OCL(OCLWrapper):
         halflen = kernel.shape[0] / 2
         kernel_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=kernel)
 
+        inshape = src.shape
         src = np.asarray(src)
+        dims = len(src.shape)
+        if dims == 1:
+            src = src.reshape(src.shape[0],1,1)
+        elif dims == 2:
+            src = src.reshape(src.shape[0],1,src.shape[1])
+
         src_padded = np.zeros((src.shape[0]+2*halflen, 1, 4), dtype=src.dtype)
-        src_padded[halflen:-halflen,:,:] = src
+        src_padded[halflen:-halflen,:,:src.shape[2]] = src[:,:,:src.shape[2]]
 
         src_padded[:halflen,:,:] = src_padded[halflen:halflen*2,:,:][::-1,...]
         src_padded[-halflen:,:,:] = src_padded[-halflen*2:-halflen,:,:][::-1,...]
@@ -81,7 +88,7 @@ class convolve1d_OCL(OCLWrapper):
         self.prg.convolve1d_naive(queue, (dest.shape[1], dest.shape[0]), None, src_buf, dest_buf, kernel_buf, np.int32(halflen))
         cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=(src.shape[1], src.shape[0])).wait()
 
-        dest = dest.copy()
+        dest = dest[:,:,:src.shape[2]].reshape(inshape)
 
         src_buf.release()
         dest_buf.release()
