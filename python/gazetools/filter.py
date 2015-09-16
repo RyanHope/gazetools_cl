@@ -71,7 +71,10 @@ class convolve1d_OCL(OCLWrapper):
         if dims == 1:
             src = src.reshape(src.shape[0],1,1)
         elif dims == 2:
+            assert src.shape[1] <= 4
             src = src.reshape(src.shape[0],1,src.shape[1])
+        else:
+            assert src.shape[2] <= 4
 
         src_padded = np.zeros((src.shape[0]+2*halflen, 1, 4), dtype=src.dtype)
         src_padded[halflen:-halflen,:,:src.shape[2]] = src[:,:,:src.shape[2]]
