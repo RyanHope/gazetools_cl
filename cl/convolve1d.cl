@@ -29,19 +29,19 @@
 __kernel void convolve1d_naive(__read_only  image2d_t imgSrc,
                                __write_only image2d_t imgConvolved,
                                __constant   float *   kernelValues,
-                                            int       w)
+                                            int       halflen)
 {
   // This kernel expects imgSrc to the mirror padded to the half kernel length,
   // imgConvolved should be the same dimensions as the original unpadded image.
 
-  int x = get_global_id(0);
-  int y = get_global_id(1);
+  int i = get_global_id(1);
+  int ii = i + halflen;
 
-  float4 convPix = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
+  float4 convPix = read_imagef(imgSrc, (int2)(0,ii)) * kernelValues[halflen];
 
-  for (int i = 0; i < w; i++)
+  for (int k = 1; k <= halflen; k++)
   {
-    convPix += read_imagef(imgSrc, (int2)(x+i,y)) * kernelValues[i];
+    convPix += read_imagef(imgSrc, (int2)(0,ii+k)) * kernelValues[halflen-k] + read_imagef(imgSrc, (int2)(0,ii-k)) * kernelValues[halflen+k];
   }
-  write_imagef(imgConvolved, (int2)(x, y), convPix);
+  write_imagef(imgConvolved, (int2)(0, i), convPix);
 }
