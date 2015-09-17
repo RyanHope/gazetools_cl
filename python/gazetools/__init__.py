@@ -37,3 +37,7 @@ from gazetools.filter import (
 from gazetools.eyetracking import (
     pva
 )
+
+from gazetools.misc import (
+    turnpoints
+)
