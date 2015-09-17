@@ -1,0 +1,258 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gazetools.filter &mdash; Gazetools 0.0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Gazetools 0.0.1 documentation" href="index.html"/>
+        <link rel="next" title="gazetools.imgproc" href="gazetools.imgproc.html"/>
+        <link rel="prev" title="Installation" href="installation.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+          <a href="index.html" class="fa fa-home"> Gazetools</a>
+        
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#features">Features</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#generic-requirements">Generic requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#pip-installation">Pip installation</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Modules</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">gazetools.filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gazetools.imgproc.html">gazetools.imgproc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gazetools.visualangle.html">gazetools.visualangle</a></li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Gazetools</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>gazetools.filter</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="module-gazetools.filter">
+<span id="gazetools-filter"></span><h1>gazetools.filter<a class="headerlink" href="#module-gazetools.filter" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="gazetools.filter.convolve1d">
+<code class="descname">convolve1d</code><span class="sig-paren">(</span><em>ctx</em>, <em>src</em>, <em>kernel</em><span class="sig-paren">)</span><a class="headerlink" href="#gazetools.filter.convolve1d" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="gazetools.filter.convolve1d2">
+<code class="descname">convolve1d2</code><span class="sig-paren">(</span><em>ctx</em>, <em>src</em>, <em>kernel1</em>, <em>kernel2</em><span class="sig-paren">)</span><a class="headerlink" href="#gazetools.filter.convolve1d2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="gazetools.filter.convolve1d2_OCL">
+<em class="property">class </em><code class="descname">convolve1d2_OCL</code><a class="reference internal" href="_modules/gazetools/filter.html#convolve1d2_OCL"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gazetools.filter.convolve1d2_OCL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">gazetools.helpers.OCLWrapper</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="gazetools.filter.convolve1d_OCL">
+<em class="property">class </em><code class="descname">convolve1d_OCL</code><a class="reference internal" href="_modules/gazetools/filter.html#convolve1d_OCL"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gazetools.filter.convolve1d_OCL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">gazetools.helpers.OCLWrapper</span></code></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gazetools.filter.convolve2d">
+<code class="descname">convolve2d</code><span class="sig-paren">(</span><em>ctx</em>, <em>src</em>, <em>kernel</em><span class="sig-paren">)</span><a class="headerlink" href="#gazetools.filter.convolve2d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blurs an image and downsamples it.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ctx</strong> (<em>pyopencl._cl.Context</em>) &#8211; an OpenCL context</li>
+<li><strong>src</strong> (<em>numpy.ndarray</em>) &#8211; an image</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><cite>src</cite> downsampled to 1/4 of it&#8217;s orignal area</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><cite>pyrUp</cite></p>
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="gazetools.filter.convolve2d_OCL">
+<em class="property">class </em><code class="descname">convolve2d_OCL</code><a class="reference internal" href="_modules/gazetools/filter.html#convolve2d_OCL"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gazetools.filter.convolve2d_OCL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">gazetools.helpers.OCLWrapper</span></code></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gazetools.filter.pyrDown">
+<code class="descname">pyrDown</code><span class="sig-paren">(</span><em>ctx</em>, <em>src</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gazetools/filter.html#pyrDown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gazetools.filter.pyrDown" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="gazetools.filter.pyrUp">
+<code class="descname">pyrUp</code><span class="sig-paren">(</span><em>ctx</em>, <em>src</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gazetools/filter.html#pyrUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gazetools.filter.pyrUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="gazetools.filter.savgol_coeffs">
+<code class="descname">savgol_coeffs</code><span class="sig-paren">(</span><em>window_length</em>, <em>polyorder</em>, <em>pos=None</em>, <em>delta=1.0</em>, <em>deriv=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gazetools/filter.html#savgol_coeffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gazetools.filter.savgol_coeffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="gazetools.imgproc.html" class="btn btn-neutral float-right" title="gazetools.imgproc">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="installation.html" class="btn btn-neutral" title="Installation"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Ryan M. Hope.
+    </p>
+  </div>
+
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+  
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

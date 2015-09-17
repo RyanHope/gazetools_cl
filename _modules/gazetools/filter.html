@@ -1,0 +1,390 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gazetools.filter &mdash; Gazetools 0.0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Gazetools 0.0.1 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+          <a href="../../index.html" class="fa fa-home"> Gazetools</a>
+        
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../overview.html#features">Features</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#generic-requirements">Generic requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#pip-installation">Pip installation</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Modules</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../gazetools.filter.html">gazetools.filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gazetools.imgproc.html">gazetools.imgproc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gazetools.visualangle.html">gazetools.visualangle</a></li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">Gazetools</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>gazetools.filter</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <h1>Source code for gazetools.filter</h1><div class="highlight"><pre>
+<span class="c">#===============================================================================</span>
+<span class="c"># This file is part of gazetools.</span>
+<span class="c"># Copyright (C) 2015 Ryan M. Hope &lt;rmh3093@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># gazetools is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># gazetools is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with gazetools.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c">#===============================================================================</span>
+
+<span class="kn">from</span> <span class="nn">.helpers</span> <span class="kn">import</span> <span class="n">OCLWrapper</span>
+
+<span class="kn">import</span> <span class="nn">pyopencl</span> <span class="kn">as</span> <span class="nn">cl</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="n">kernel_gaussian3x3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+    <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mf">16.</span><span class="p">,</span> <span class="mi">2</span><span class="o">/</span><span class="mf">16.</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mf">16.</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">2</span><span class="o">/</span><span class="mf">16.</span><span class="p">,</span> <span class="mi">4</span><span class="o">/</span><span class="mf">16.</span><span class="p">,</span> <span class="mi">2</span><span class="o">/</span><span class="mf">8.</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mf">16.</span><span class="p">,</span> <span class="mi">2</span><span class="o">/</span><span class="mf">16.</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mf">16.</span><span class="p">],</span>
+<span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+<span class="n">kernel_gaussian5x5</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+    <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">4</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">6</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">4</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mf">256.</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">4</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">16</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">24</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">16</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">4</span><span class="o">/</span><span class="mf">256.</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">6</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">24</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">36</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">24</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">6</span><span class="o">/</span><span class="mf">256.</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">4</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">16</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">24</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">16</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">4</span><span class="o">/</span><span class="mf">256.</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">4</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">6</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">4</span><span class="o">/</span><span class="mf">256.</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mf">256.</span><span class="p">],</span>
+<span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+<div class="viewcode-block" id="savgol_coeffs"><a class="viewcode-back" href="../../gazetools.filter.html#gazetools.filter.savgol_coeffs">[docs]</a><span class="k">def</span> <span class="nf">savgol_coeffs</span><span class="p">(</span><span class="n">window_length</span><span class="p">,</span> <span class="n">polyorder</span><span class="p">,</span> <span class="n">deriv</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">polyorder</span> <span class="o">&gt;=</span> <span class="n">window_length</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;polyorder must be less than window_length.&quot;</span><span class="p">)</span>
+    <span class="n">halflen</span><span class="p">,</span> <span class="n">rem</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">window_length</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">rem</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;window_length must be odd.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pos</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">halflen</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="n">window_length</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;pos must be nonnegative and less than &quot;</span>
+                         <span class="s">&quot;window_length.&quot;</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">pos</span><span class="p">,</span> <span class="n">window_length</span> <span class="o">-</span> <span class="n">pos</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">polyorder</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">x</span> <span class="o">**</span> <span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">x</span> <span class="o">**</span> <span class="n">order</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">polyorder</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">y</span><span class="p">[</span><span class="n">deriv</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">factorial</span><span class="p">(</span><span class="n">deriv</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">**</span> <span class="n">deriv</span><span class="p">)</span>
+    <span class="n">coeffs</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">lstsq</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">coeffs</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="convolve1d_OCL"><a class="viewcode-back" href="../../gazetools.filter.html#gazetools.filter.convolve1d_OCL">[docs]</a><span class="k">class</span> <span class="nc">convolve1d_OCL</span><span class="p">(</span><span class="n">OCLWrapper</span><span class="p">):</span>
+    <span class="n">__kernel__</span> <span class="o">=</span> <span class="s">&quot;convolve1d.cl&quot;</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">kernel</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">halflen</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">kernel_buf</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">Buffer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">cl</span><span class="o">.</span><span class="n">mem_flags</span><span class="o">.</span><span class="n">READ_ONLY</span> <span class="o">|</span> <span class="n">cl</span><span class="o">.</span><span class="n">mem_flags</span><span class="o">.</span><span class="n">COPY_HOST_PTR</span><span class="p">,</span> <span class="n">hostbuf</span><span class="o">=</span><span class="n">kernel</span><span class="p">)</span>
+
+        <span class="n">inshape</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">4</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">,</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">4</span>
+
+        <span class="n">src_padded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">halflen</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">src_padded</span><span class="p">[</span><span class="n">halflen</span><span class="p">:</span><span class="o">-</span><span class="n">halflen</span><span class="p">,:,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">=</span> <span class="n">src</span><span class="p">[:,:,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+
+        <span class="n">src_padded</span><span class="p">[:</span><span class="n">halflen</span><span class="p">,:,:]</span> <span class="o">=</span> <span class="n">src_padded</span><span class="p">[</span><span class="n">halflen</span><span class="p">:</span><span class="n">halflen</span><span class="o">*</span><span class="mi">2</span><span class="p">,:,:][::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+        <span class="n">src_padded</span><span class="p">[</span><span class="o">-</span><span class="n">halflen</span><span class="p">:,:,:]</span> <span class="o">=</span> <span class="n">src_padded</span><span class="p">[</span><span class="o">-</span><span class="n">halflen</span><span class="o">*</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="n">halflen</span><span class="p">,:,:][::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">)</span>
+        <span class="n">src_buf</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">image_from_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">src_padded</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">norm_int</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">dest_buf</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">image_from_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&quot;w&quot;</span><span class="p">,</span> <span class="n">norm_int</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+
+        <span class="n">queue</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">CommandQueue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prg</span><span class="o">.</span><span class="n">convolve1d_naive</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="p">(</span><span class="n">dest</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dest</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="bp">None</span><span class="p">,</span> <span class="n">src_buf</span><span class="p">,</span> <span class="n">dest_buf</span><span class="p">,</span> <span class="n">kernel_buf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">halflen</span><span class="p">))</span>
+        <span class="n">cl</span><span class="o">.</span><span class="n">enqueue_copy</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">dest_buf</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">region</span><span class="o">=</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">dest</span><span class="p">[:,:,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">inshape</span><span class="p">)</span>
+
+        <span class="n">src_buf</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="n">dest_buf</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="n">kernel_buf</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">dest</span></div>
+<span class="n">convolve1d</span> <span class="o">=</span> <span class="n">convolve1d_OCL</span><span class="p">()</span>
+
+<div class="viewcode-block" id="convolve1d2_OCL"><a class="viewcode-back" href="../../gazetools.filter.html#gazetools.filter.convolve1d2_OCL">[docs]</a><span class="k">class</span> <span class="nc">convolve1d2_OCL</span><span class="p">(</span><span class="n">OCLWrapper</span><span class="p">):</span>
+    <span class="n">__kernel__</span> <span class="o">=</span> <span class="s">&quot;convolve1d.cl&quot;</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">kernel1</span><span class="p">,</span> <span class="n">kernel2</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+        <span class="n">kernel1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">kernel1</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">kernel2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">kernel2</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">halflen</span> <span class="o">=</span> <span class="n">kernel1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">kernel1_buf</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">Buffer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">cl</span><span class="o">.</span><span class="n">mem_flags</span><span class="o">.</span><span class="n">READ_ONLY</span> <span class="o">|</span> <span class="n">cl</span><span class="o">.</span><span class="n">mem_flags</span><span class="o">.</span><span class="n">COPY_HOST_PTR</span><span class="p">,</span> <span class="n">hostbuf</span><span class="o">=</span><span class="n">kernel1</span><span class="p">)</span>
+        <span class="n">kernel2_buf</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">Buffer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">cl</span><span class="o">.</span><span class="n">mem_flags</span><span class="o">.</span><span class="n">READ_ONLY</span> <span class="o">|</span> <span class="n">cl</span><span class="o">.</span><span class="n">mem_flags</span><span class="o">.</span><span class="n">COPY_HOST_PTR</span><span class="p">,</span> <span class="n">hostbuf</span><span class="o">=</span><span class="n">kernel2</span><span class="p">)</span>
+
+        <span class="n">inshape</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">dims</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">4</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">,</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">4</span>
+
+        <span class="n">src_padded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">halflen</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">src_padded</span><span class="p">[</span><span class="n">halflen</span><span class="p">:</span><span class="o">-</span><span class="n">halflen</span><span class="p">,:,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">=</span> <span class="n">src</span><span class="p">[:,:,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+
+        <span class="n">src_padded</span><span class="p">[:</span><span class="n">halflen</span><span class="p">,:,:]</span> <span class="o">=</span> <span class="n">src_padded</span><span class="p">[</span><span class="n">halflen</span><span class="p">:</span><span class="n">halflen</span><span class="o">*</span><span class="mi">2</span><span class="p">,:,:][::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+        <span class="n">src_padded</span><span class="p">[</span><span class="o">-</span><span class="n">halflen</span><span class="p">:,:,:]</span> <span class="o">=</span> <span class="n">src_padded</span><span class="p">[</span><span class="o">-</span><span class="n">halflen</span><span class="o">*</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="n">halflen</span><span class="p">,:,:][::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">)</span>
+        <span class="n">src_buf</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">image_from_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">src_padded</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">norm_int</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">dest_buf</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">image_from_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&quot;w&quot;</span><span class="p">,</span> <span class="n">norm_int</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+
+        <span class="n">queue</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">CommandQueue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prg</span><span class="o">.</span><span class="n">convolve1d2_naive</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="p">(</span><span class="n">dest</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dest</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="bp">None</span><span class="p">,</span> <span class="n">src_buf</span><span class="p">,</span> <span class="n">dest_buf</span><span class="p">,</span> <span class="n">kernel1_buf</span><span class="p">,</span> <span class="n">kernel2_buf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">halflen</span><span class="p">))</span>
+        <span class="n">cl</span><span class="o">.</span><span class="n">enqueue_copy</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">dest_buf</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">region</span><span class="o">=</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">dest</span><span class="p">[:,:,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">inshape</span><span class="p">)</span>
+
+        <span class="n">src_buf</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="n">dest_buf</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="n">kernel1_buf</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="n">kernel2_buf</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">dest</span></div>
+<span class="n">convolve1d2</span> <span class="o">=</span> <span class="n">convolve1d2_OCL</span><span class="p">()</span>
+
+<div class="viewcode-block" id="convolve2d_OCL"><a class="viewcode-back" href="../../gazetools.filter.html#gazetools.filter.convolve2d_OCL">[docs]</a><span class="k">class</span> <span class="nc">convolve2d_OCL</span><span class="p">(</span><span class="n">OCLWrapper</span><span class="p">):</span>
+    <span class="n">__kernel__</span> <span class="o">=</span> <span class="s">&quot;convolve2d.cl&quot;</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">kernel</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">halflen</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">kernelf</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">kernelf_buf</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">Buffer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">cl</span><span class="o">.</span><span class="n">mem_flags</span><span class="o">.</span><span class="n">READ_ONLY</span> <span class="o">|</span> <span class="n">cl</span><span class="o">.</span><span class="n">mem_flags</span><span class="o">.</span><span class="n">COPY_HOST_PTR</span><span class="p">,</span> <span class="n">hostbuf</span><span class="o">=</span><span class="n">kernelf</span><span class="p">)</span>
+
+        <span class="n">src</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="n">src_padded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">halflen</span><span class="p">,</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">halflen</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">src_padded</span><span class="p">[</span><span class="n">halflen</span><span class="p">:</span><span class="o">-</span><span class="n">halflen</span><span class="p">,</span><span class="n">halflen</span><span class="p">:</span><span class="o">-</span><span class="n">halflen</span><span class="p">,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">=</span> <span class="n">src</span><span class="p">[:,:,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+
+        <span class="n">src_padded</span><span class="p">[</span><span class="n">halflen</span><span class="p">:</span><span class="o">-</span><span class="n">halflen</span><span class="p">,:</span><span class="n">halflen</span><span class="p">,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">=</span> <span class="n">src_padded</span><span class="p">[</span><span class="n">halflen</span><span class="p">:</span><span class="o">-</span><span class="n">halflen</span><span class="p">,</span><span class="n">halflen</span><span class="p">:</span><span class="n">halflen</span><span class="o">*</span><span class="mi">2</span><span class="p">,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]][:,::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">src_padded</span><span class="p">[</span><span class="n">halflen</span><span class="p">:</span><span class="o">-</span><span class="n">halflen</span><span class="p">,</span><span class="o">-</span><span class="n">halflen</span><span class="p">:,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">=</span> <span class="n">src_padded</span><span class="p">[</span><span class="n">halflen</span><span class="p">:</span><span class="o">-</span><span class="n">halflen</span><span class="p">,</span><span class="o">-</span><span class="n">halflen</span><span class="o">*</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="n">halflen</span><span class="p">,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]][:,::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">src_padded</span><span class="p">[:</span><span class="n">halflen</span><span class="p">,:,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">=</span> <span class="n">src_padded</span><span class="p">[</span><span class="n">halflen</span><span class="p">:</span><span class="n">halflen</span><span class="o">*</span><span class="mi">2</span><span class="p">,:,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]][::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+        <span class="n">src_padded</span><span class="p">[</span><span class="o">-</span><span class="n">halflen</span><span class="p">:,:,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">=</span> <span class="n">src_padded</span><span class="p">[</span><span class="o">-</span><span class="n">halflen</span><span class="o">*</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="n">halflen</span><span class="p">,:,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]][::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">)</span>
+        <span class="n">src_buf</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">image_from_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">src_padded</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">norm_int</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">dest_buf</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">image_from_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&quot;w&quot;</span><span class="p">,</span> <span class="n">norm_int</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+
+        <span class="n">queue</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">CommandQueue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prg</span><span class="o">.</span><span class="n">convolve2d_naive</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="p">(</span><span class="n">dest</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dest</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="bp">None</span><span class="p">,</span> <span class="n">src_buf</span><span class="p">,</span> <span class="n">dest_buf</span><span class="p">,</span> <span class="n">kernelf_buf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">kernel</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">cl</span><span class="o">.</span><span class="n">enqueue_copy</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">dest_buf</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">region</span><span class="o">=</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">dest</span><span class="p">[:,:,:</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">src_buf</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="n">dest_buf</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="n">kernelf_buf</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">dest</span></div>
+<span class="n">convolve2d</span> <span class="o">=</span> <span class="n">convolve2d_OCL</span><span class="p">()</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Blurs an image and downsamples it.</span>
+
+<span class="sd">:param ctx: an OpenCL context</span>
+<span class="sd">:param src: an image</span>
+<span class="sd">:type ctx: pyopencl._cl.Context</span>
+<span class="sd">:type src: numpy.ndarray</span>
+<span class="sd">:returns: `src` downsampled to 1/4 of it&#39;s orignal area</span>
+<span class="sd">:rtype: numpy.ndarray</span>
+
+<span class="sd">.. seealso:: `pyrUp`</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="pyrDown"><a class="viewcode-back" href="../../gazetools.filter.html#gazetools.filter.pyrDown">[docs]</a><span class="k">def</span> <span class="nf">pyrDown</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
+    <span class="n">down</span> <span class="o">=</span> <span class="n">convolve2d</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">kernel_gaussian5x5</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">down</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,:]</span>
+</div>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Upsamples an image and then blurs it.</span>
+
+<span class="sd">:param ctx: an OpenCL context</span>
+<span class="sd">:param src: an image</span>
+<span class="sd">:type ctx: pyopencl._cl.Context</span>
+<span class="sd">:type src: numpy.ndarray</span>
+<span class="sd">:returns: `src` upsampled to 4 times it&#39;s original area</span>
+<span class="sd">:rtype: numpy.ndarray</span>
+
+<span class="sd">.. seealso:: `pyrDown`</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="pyrUp"><a class="viewcode-back" href="../../gazetools.filter.html#gazetools.filter.pyrUp">[docs]</a><span class="k">def</span> <span class="nf">pyrUp</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
+    <span class="n">up</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="n">dtype</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">up</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">src</span>
+    <span class="k">return</span> <span class="n">convolve2d</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">up</span><span class="p">,</span> <span class="mi">4</span><span class="o">*</span><span class="n">kernel_gaussian5x5</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Ryan M. Hope.
+    </p>
+  </div>
+
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+  
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
