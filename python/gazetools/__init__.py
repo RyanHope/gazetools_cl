@@ -33,3 +33,7 @@ from gazetools.filter import (
     convolve1d, convolve1d2, convolve2d,
     pyrDown, pyrUp
 )
+
+from gazetools.eyetracking import (
+    pva
+)
