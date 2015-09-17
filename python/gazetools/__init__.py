@@ -41,3 +41,7 @@ from gazetools.eyetracking import (
 from gazetools.misc import (
     turnpoints
 )
+
+from gazetools.retina import (
+    RetinaFilter
+)

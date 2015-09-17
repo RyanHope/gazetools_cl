@@ -40,14 +40,14 @@ class MainApp(QWidget):
         self.contrast_sensitivity = 1.0/64.0
         self.critical_eccentricity = [0.0]
         horizontal_degree = GT.subtended_angle([0],[self.RX/2],[self.RX],[self.RY/2],self.RX,self.RY,self.SW,self.SH,[self.EZ],[0],[0])[0]
-        viewing_distance = (self.RX/2)/np.tan(np.pi*horizontal_degree/360);
+        #viewing_distance = (self.RX/2)/np.tan(np.pi*horizontal_degree/360);
         freq = 0.5/(horizontal_degree/self.RX)
         for l in xrange(self.levels):
             ecc = self.halfres_eccentricity * ( (np.log(1/self.contrast_sensitivity)*(1<<l)/(self.decay_constant*freq))-1 )
             if ecc > 90.0: ecc = 90.0
             self.critical_eccentricity.append(ecc)
         self.critical_eccentricity.append(90.0)
-        self.fovea_threshold = np.tan(self.critical_eccentricity[1]*np.pi/180 )*viewing_distance
+        # self.fovea_threshold = np.tan(self.critical_eccentricity[1]*np.pi/180 )*viewing_distance
 
         w = self.RX*2
         h = self.RY*2
