@@ -15,20 +15,28 @@ ctx = cl.create_some_context(answers=[0,1])
 
 df=pd.read_csv(pkg_resources.resource_filename("gazetools","resources/data/smi.csv"))
 
-smooth = savgol_coeffs(11, 2, 0, 1.0/500.0)
+filters = [savgol_coeffs(33, 2, d, 1.0/500) for d in xrange(3)]
 
-gaze = np.array(df[["smi_sxl","smi_syl"]],dtype=np.float32)
-print gaze
-print gaze.shape
+gaze = np.array(df[["smi_sxl","smi_syl","smi_sxl","smi_syl"]],dtype=np.float32)
 
-gaze_smoothed = convolve1d(ctx, gaze, smooth)
-print gaze_smoothed
-print gaze_smoothed.shape
+smooth = convolve1d(ctx, gaze, filters[0])
+vel = convolve1d(ctx, gaze, filters[1])
 
-# x_cl1 = convolve1d(ctx, x, smooth)
-#
-t = np.arange(gaze_smoothed.shape[0])
-plt.figure(1)
-plt.plot(t,gaze[:,0],'r-',t,gaze_smoothed[:,0],'b-')
-#plt.plot(t,gaze,'r-',t,gaze_smoothed,'b-')
+combo = convolve1d2(ctx, gaze, filters[1], filters[2])
+
+t = np.arange(gaze.shape[0])
+
+fig = plt.figure(figsize=(16,9))
+
+a=fig.add_subplot(3,1,1)
+plt.plot(t,gaze[:,0],'r-')
+a.set_title("x")
+
+a=fig.add_subplot(3,1,2)
+plt.plot(t,combo[:,0],'b-')
+a.set_title("v")
+a=fig.add_subplot(3,1,3)
+plt.plot(t,combo[:,2],'g-')
+a.set_title("a")
+
 plt.show()

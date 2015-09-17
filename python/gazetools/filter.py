@@ -99,6 +99,50 @@ class convolve1d_OCL(OCLWrapper):
         return dest
 convolve1d = convolve1d_OCL()
 
+class convolve1d2_OCL(OCLWrapper):
+    __kernel__ = "convolve1d.cl"
+    def __call__(self, ctx, src, kernel1, kernel2):
+        self.build(ctx)
+        kernel1 = np.array(kernel1, copy=False, dtype=np.float32)
+        kernel2 = np.array(kernel2, copy=False, dtype=np.float32)
+        halflen = kernel1.shape[0] / 2
+        kernel1_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=kernel1)
+        kernel2_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=kernel2)
+
+        inshape = src.shape
+        src = np.asarray(src)
+        dims = len(src.shape)
+        assert dims > 1
+        if dims == 2:
+            assert src.shape[1] <= 4
+            src = src.reshape(src.shape[0],1,src.shape[1])
+        else:
+            assert src.shape[2] <= 4
+
+        src_padded = np.zeros((src.shape[0]+2*halflen, 1, 4), dtype=src.dtype)
+        src_padded[halflen:-halflen,:,:src.shape[2]] = src[:,:,:src.shape[2]]
+
+        src_padded[:halflen,:,:] = src_padded[halflen:halflen*2,:,:][::-1,...]
+        src_padded[-halflen:,:,:] = src_padded[-halflen*2:-halflen,:,:][::-1,...]
+
+        norm = np.issubdtype(src.dtype, np.integer)
+        src_buf = cl.image_from_array(self.ctx, src_padded, 4, norm_int=norm)
+        dest = np.zeros((src.shape[0], src.shape[1], 4), dtype=src.dtype)
+        dest_buf = cl.image_from_array(self.ctx, dest, 4, mode="w", norm_int=norm)
+
+        queue = cl.CommandQueue(self.ctx)
+        self.prg.convolve1d2_naive(queue, (dest.shape[1], dest.shape[0]), None, src_buf, dest_buf, kernel1_buf, kernel2_buf, np.int32(halflen))
+        cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=(src.shape[1], src.shape[0])).wait()
+
+        dest = dest[:,:,:src.shape[2]].reshape(inshape)
+
+        src_buf.release()
+        dest_buf.release()
+        kernel1_buf.release()
+        kernel2_buf.release()
+        return dest
+convolve1d2 = convolve1d2_OCL()
+
 class convolve2d_OCL(OCLWrapper):
     __kernel__ = "convolve2d.cl"
     def __call__(self, ctx, src, kernel):
