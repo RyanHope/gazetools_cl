@@ -14,9 +14,29 @@ from gazetools import *
 
 ctx = cl.create_some_context(answers=[0,1])
 
-rf = RetinaFilter(ctx,1680,1050,473.76,296.1,700.0)
-plt.figure("Eccentricity map",figsize=(16,10))
-plt.imshow(rf.ecc)
-# plt.figure("Resolution map",figsize=(16,10))
-# plt.imshow(rf.resmap)
+img = np.asarray(Image.open(pkg_resources.resource_filename("gazetools", "resources/images/PM5544_with_non-PAL_signals.png")))
+# plt.figure("Original",figsize=(16.80,10.50))
+# plt.imshow(img)
+
+rf = RetinaFilter(ctx,img.shape[1],img.shape[0],473.76,296.1,700.0)
+# blended = rf.filter(img,img.shape[1]/2,img.shape[0]/2)
+blended = rf.filter(img,200,350)
+
+# plt.figure("Eccentricity map",figsize=(16.80,10.50))
+# plt.imshow(rf.blendmap[:,:,0])
+# plt.figure("Resolution map",figsize=(16.80,10.50))
+# plt.imshow(rf.blendmap[:,:,1])
+# plt.figure("Blend map",figsize=(16.80,10.50))
+# plt.imshow(rf.blendmap[:,:,2])
+# plt.figure("Layer map",figsize=(16.80,10.50))
+# plt.imshow(np.array(rf.blendmap[:,:,3],dtype=np.uint8))
+#
+# for i in xrange(rf.levels):
+#     plt.figure("Pyramid level=%d" % (i+1),figsize=(16,10))
+#     plt.imshow(rf.pyramid[i])
+
+print blended.shape
+plt.figure("Blended",figsize=(16.80,10.50))
+plt.imshow(blended)
+plt.colorbar(orientation='horizontal')
 plt.show()
