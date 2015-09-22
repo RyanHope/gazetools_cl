@@ -53,16 +53,16 @@ blend = blend_OCL()
 
 class blendmap_OCL(OCLWrapper):
     __kernel__ = "retina.cl"
-    def __call__(self, ctx, rx, ry, sw, sh, ez, ex, ey, levels, halfres_eccentricity, contrast_sensitivity, decay_constant):
+    def __call__(self, ctx, ix, iy, rx, ry, sw, sh, ez, ex, ey, levels, halfres_eccentricity, contrast_sensitivity, decay_constant):
         self.build(ctx)
 
-        w = 2*rx
-        h = 2*ry
+        w = 2*ix
+        h = 2*iy
 
         assert levels==6
         var = np.array([0.849, 0.4245, 0.21225, 0.106125, 0.0530625, 0.02653125], dtype=np.float32)
-        horizontal_degree = subtended_angle(ctx,[0],[ry],[w],[ry],rx,ry,sw,sh,[ez],[ex],[ey])[0]
-        freq = 0.5/(horizontal_degree/w)
+        horizontal_degree = subtended_angle(ctx,[0],[ry],[2*rx],[ry],rx,ry,sw,sh,[ez],[ex],[ey])[0]
+        freq = 0.5/(horizontal_degree/(2*rx))
 
         critical_eccentricity = [0.0]
         for l in xrange(levels):
@@ -71,7 +71,6 @@ class blendmap_OCL(OCLWrapper):
             critical_eccentricity.append(ecc)
         critical_eccentricity.append(90.0)
         critical_eccentricity = np.array(critical_eccentricity, dtype=np.float32)
-        print ("Critical Eccentricities",["%.2f" % ce for ce in critical_eccentricity])
 
         ce_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=critical_eccentricity)
         var_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=var)
@@ -81,7 +80,7 @@ class blendmap_OCL(OCLWrapper):
         queue = cl.CommandQueue(self.ctx)
         self.prg.blendmap(queue, (dest.shape[1], dest.shape[0]), None,
                           ce_buf, var_buf,
-                          np.float32(rx), np.float32(ry),
+                          np.float32(ix), np.float32(iy),
                           np.float32(w), np.float32(h),
                           np.float32(2*sw), np.float32(2*sh),
                           np.float32(ez), np.float32(ex), np.float32(ey),
@@ -94,17 +93,21 @@ class blendmap_OCL(OCLWrapper):
         ce_buf.release()
         var_buf.release()
 
-        return dest
+        return critical_eccentricity, dest
 blendmap = blendmap_OCL()
 
 class RetinaFilter(object):
 
-    def __init__(self, ctx, rx, ry, sw, sh, ez, ex=0, ey=0):
+    #rf = RetinaFilter(ctx,img.shape[1],img.shape[0],vs_rx,vs_sw,vs_pd,vs_aspect,ez)
+    def __init__(self, ctx, ix, iy, rx, sw, pd, ez, ex=0, ey=0):
         self.ctx = ctx
+        self.ix = ix
+        self.iy = iy
         self.rx = rx
-        self.ry = ry
+        asp = 1.0 * iy / ix
+        self.ry = 1.0 * rx * asp
         self.sw = sw
-        self.sh = sh
+        self.sh = 1.0 * sw * asp
         self.ez = ez
         self.ex = ex
         self.ey = ey
@@ -113,7 +116,8 @@ class RetinaFilter(object):
         self.halfres_eccentricity = 2.3
         self.contrast_sensitivity = 1.0/64.0
 
-        self.blendmap = blendmap(self.ctx,
+        self.critical_eccentricity, self.blendmap = blendmap(self.ctx,
+                                 self.ix, self.iy,
                                  self.rx, self.ry,
                                  self.sw, self.sh,
                                  self.ez, self.ex, self.ey,
