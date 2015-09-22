@@ -45,7 +45,6 @@ class blend_OCL(OCLWrapper):
         cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=(dest.shape[1], dest.shape[0])).wait()
 
         dest = dest[:,:,0:pyramid.shape[3]].copy()
-        print dest
         dest_buf.release()
         pyramid_buf.release()
         blendmap_buf.release()
@@ -62,7 +61,7 @@ class blendmap_OCL(OCLWrapper):
 
         assert levels==6
         var = np.array([0.849, 0.4245, 0.21225, 0.106125, 0.0530625, 0.02653125], dtype=np.float32)
-        horizontal_degree = subtended_angle(ctx,[0],[ry/2],[rx],[ry/2],rx,ry,sw,sh,[ez],[ex],[ey])[0]
+        horizontal_degree = subtended_angle(ctx,[0],[ry],[w],[ry],rx,ry,sw,sh,[ez],[ex],[ey])[0]
         freq = 0.5/(horizontal_degree/w)
 
         critical_eccentricity = [0.0]
@@ -72,7 +71,7 @@ class blendmap_OCL(OCLWrapper):
             critical_eccentricity.append(ecc)
         critical_eccentricity.append(90.0)
         critical_eccentricity = np.array(critical_eccentricity, dtype=np.float32)
-        print critical_eccentricity
+        print ("Critical Eccentricities",["%.2f" % ce for ce in critical_eccentricity])
 
         ce_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=critical_eccentricity)
         var_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=var)
@@ -124,8 +123,16 @@ class RetinaFilter(object):
                                  self.decay_constant)
         self.pyramid = None
 
-    def __makePyramid(self, img):
-        G = np.array(img)
+    def makePyramid(self, img):
+
+        o = np.max(img.shape)
+        fs = int(np.log(o)/np.log(2))
+        fs = 1<<fs
+        if fs < o: fs *= 2
+
+        G = np.zeros((fs,fs,4), dtype=img.dtype)
+        G[:img.shape[0],:img.shape[1],:img.shape[2]] = img
+
         gpA = [G]
         for i in xrange(self.levels):
             G = pyrDown(self.ctx, G)
@@ -136,8 +143,7 @@ class RetinaFilter(object):
             for _ in xrange(i):
                 G = pyrUp(self.ctx, G)
             gpB.append(G)
-        return gpB
+        return [b[:img.shape[0],:img.shape[1],:img.shape[2]] for b in gpB]
 
-    def filter(self, img, x, y):
-        self.pyramid = np.array(self.__makePyramid(img))
-        return blend(self.ctx, self.pyramid, self.blendmap, x, y)
+    def blend(self, pyramid, x, y):
+        return blend(self.ctx, pyramid, self.blendmap, x, y)
