@@ -29,6 +29,7 @@ class MainApp(QWidget):
     def setup_codec(self):
         _, frame = self.capture.read()
         self.video_size = QSize(frame.shape[1], frame.shape[0])
+        self.focus = (frame.shape[1]/2,frame.shape[0]/2)
         ctx = cl.create_some_context(answers=[0,1])
         vs_pd = 3.546
         vs_sw = 473.76
@@ -43,7 +44,6 @@ class MainApp(QWidget):
 
     def addFocus(self, event):
         self.focus = (event.pos().x(),event.pos().y())
-        print self.focus
 
     def setup_ui(self):
         """Initialize widgets.
@@ -82,7 +82,7 @@ class MainApp(QWidget):
         _, frame = self.capture.read()
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         pyramid = np.array(self.rf.makePyramid(frame))
-        frame = self.rf.blend(pyramid,pyramid[0].shape[1]/2,pyramid[0].shape[0]/2)
+        frame = self.rf.blend(pyramid,self.focus[0],self.focus[1])
         image = QImage(frame, frame.shape[1], frame.shape[0],
                         frame.strides[0], QImage.Format_RGB888)
         self.video.setPixmap(QPixmap.fromImage(image))
