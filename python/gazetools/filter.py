@@ -16,7 +16,7 @@
 # along with gazetools.  If not, see <http://www.gnu.org/licenses/>.
 #===============================================================================
 
-from .helpers import OCLWrapper
+from .helpers import OCLWrapper, init_image
 
 import pyopencl as cl
 import numpy as np
@@ -152,7 +152,6 @@ class convolve2d_OCL(OCLWrapper):
         kernelf = kernel.flatten()
         kernelf_buf = cl.Buffer(self.ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=kernelf)
 
-        src = np.asarray(src)
         src_padded = np.zeros((src.shape[0]+2*halflen, src.shape[1]+2*halflen, 4), dtype=src.dtype)
         src_padded[halflen:-halflen,halflen:-halflen,:src.shape[2]] = src[:,:,:src.shape[2]]
 
@@ -165,18 +164,16 @@ class convolve2d_OCL(OCLWrapper):
         norm = np.issubdtype(src.dtype, np.integer)
         src_buf = cl.image_from_array(self.ctx, src_padded, 4, norm_int=norm)
         dest = np.zeros((src.shape[0], src.shape[1], 4), dtype=src.dtype)
-        dest_buf = cl.image_from_array(self.ctx, dest, 4, mode="w", norm_int=norm)
+        dest_buf = init_image(self.ctx, dest, 4, mode="w", norm_int=norm)
 
         queue = cl.CommandQueue(self.ctx)
         self.prg.convolve2d_naive(queue, (dest.shape[1], dest.shape[0]), None, src_buf, dest_buf, kernelf_buf, np.int32(kernel.shape[0]))
         cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=(src.shape[1], src.shape[0])).wait()
 
-        dest = dest[:,:,:src.shape[2]].copy()
-
-        src_buf.release()
-        dest_buf.release()
-        kernelf_buf.release()
-        return dest
+        # src_buf.release()
+        # dest_buf.release()
+        # kernelf_buf.release()
+        return dest[:,:,:src.shape[2]]
 convolve2d = convolve2d_OCL()
 
 """

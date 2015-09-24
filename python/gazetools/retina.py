@@ -22,6 +22,7 @@ from .filter import pyrUp, pyrDown
 
 import pyopencl as cl
 import numpy as np
+import cv2
 
 class blend_OCL(OCLWrapper):
     __kernel__ = "retina.cl"
@@ -126,28 +127,24 @@ class RetinaFilter(object):
                                  self.contrast_sensitivity,
                                  self.decay_constant)
         self.pyramid = None
+        o = np.max((self.ix,self.iy))
+        self.fs = int(np.log(o)/np.log(2))
+        self.fs = 1<<self.fs
+        if self.fs < o: self.fs *= 2
+        self.gpA = None
 
     def makePyramid(self, img):
+        if self.gpA==None:
+            gpA = np.zeros((self.levels,self.fs,self.fs,4), dtype=img.dtype)
+        gpA[0,:img.shape[0],:img.shape[1],:img.shape[2]] = img
 
-        o = np.max(img.shape)
-        fs = int(np.log(o)/np.log(2))
-        fs = 1<<fs
-        if fs < o: fs *= 2
+        for i in xrange(self.levels-1):
+            gpA[i+1,:self.fs>>(i+1),:self.fs>>(i+1),:] = cv2.pyrDown(gpA[i,:self.fs>>(i),:self.fs>>(i),:])
 
-        G = np.zeros((fs,fs,4), dtype=img.dtype)
-        G[:img.shape[0],:img.shape[1],:img.shape[2]] = img
-
-        gpA = [G]
         for i in xrange(self.levels):
-            G = pyrDown(self.ctx, G)
-            gpA.append(G)
-        gpB = []
-        for i in xrange(self.levels):
-            G = gpA[i].copy()
-            for _ in xrange(i):
-                G = pyrUp(self.ctx, G)
-            gpB.append(G)
-        return [b[:img.shape[0],:img.shape[1],:img.shape[2]] for b in gpB]
+            for j in xrange(i):
+                gpA[i,:self.fs>>(i-j-1),:self.fs>>(i-j-1),:] = cv2.pyrUp(gpA[i,:self.fs>>(i-j),:self.fs>>(i-j),:])
+        return gpA[:,:img.shape[0],:img.shape[1],:img.shape[2]]
 
     def blend(self, pyramid, x, y):
         return blend(self.ctx, pyramid, self.blendmap, x, y)

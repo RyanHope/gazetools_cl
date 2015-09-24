@@ -3,6 +3,8 @@
 import sys,os
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),"../python"))
 
+import cProfile
+
 from PySide.QtCore import *
 from PySide.QtGui import *
 import numpy as np
@@ -31,6 +33,7 @@ class MainApp(QWidget):
         self.video_size = QSize(frame.shape[1], frame.shape[0])
         self.focus = (frame.shape[1]/2,frame.shape[0]/2)
         ctx = cl.create_some_context(answers=[0,1])
+        convolve2d.build(ctx)
         vs_pd = 3.546
         vs_sw = 473.76
         vs_rx = 1680

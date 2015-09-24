@@ -14,8 +14,8 @@ from gazetools import *
 
 ctx = cl.create_some_context(answers=[0,1])
 
-img = np.asarray(Image.open(pkg_resources.resource_filename("gazetools", "resources/images/Bl9ZQQG.jpg")))
-# img = np.asarray(Image.open(pkg_resources.resource_filename("gazetools", "resources/images/PM5544_with_non-PAL_signals.png")))
+# img = np.asarray(Image.open(pkg_resources.resource_filename("gazetools", "resources/images/Bl9ZQQG.jpg")))
+img = np.asarray(Image.open(pkg_resources.resource_filename("gazetools", "resources/images/PM5544_with_non-PAL_signals.png")))
 r = 1.0*img.shape[1]/img.shape[0]
 rr = 10
 aspect = (r*rr,rr)

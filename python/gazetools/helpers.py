@@ -22,6 +22,58 @@ import pyopencl as cl
 import sys
 from types import MethodType
 
+def init_image(ctx, ary, num_channels=None, mode="r", norm_int=False):
+    if not ary.flags.c_contiguous:
+        raise ValueError("array must be C-contiguous")
+
+    dtype = ary.dtype
+    if num_channels is None:
+
+        from pyopencl.array import vec
+        try:
+            dtype, num_channels = vec.type_to_scalar_and_count[dtype]
+        except KeyError:
+            # It must be a scalar type then.
+            num_channels = 1
+
+        shape = ary.shape
+        strides = ary.strides
+
+    elif num_channels == 1:
+        shape = ary.shape
+        strides = ary.strides
+    else:
+        if ary.shape[-1] != num_channels:
+            raise RuntimeError("last dimension must be equal to number of channels")
+
+        shape = ary.shape[:-1]
+        strides = ary.strides[:-1]
+
+    if mode == "r":
+        mode_flags = cl.mem_flags.READ_ONLY
+    elif mode == "w":
+        mode_flags = cl.mem_flags.WRITE_ONLY
+    else:
+        raise ValueError("invalid value '%s' for 'mode'" % mode)
+
+    img_format = {
+            1: cl.channel_order.R,
+            2: cl.channel_order.RG,
+            3: cl.channel_order.RGB,
+            4: cl.channel_order.RGBA,
+            }[num_channels]
+
+    assert ary.strides[-1] == ary.dtype.itemsize
+
+    if norm_int:
+        channel_type = cl.DTYPE_TO_CHANNEL_TYPE_NORM[dtype]
+    else:
+        channel_type = cl.DTYPE_TO_CHANNEL_TYPE[dtype]
+
+    return cl.Image(ctx, mode_flags,
+            cl.ImageFormat(img_format, channel_type),
+            shape=shape[::-1])
+
 def getKernel(filename):
     return pkg_resources.resource_filename(__name__,"resources/cl"), pkg_resources.resource_string(__name__,os.path.join('resources/cl',filename))
 
