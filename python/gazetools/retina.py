@@ -28,21 +28,23 @@ class blend_OCL(OCLWrapper):
     __kernel__ = "retina.cl"
     def __call__(self, ctx, pyramid, blendmap, x, y):
         self.build(ctx)
-        #pyramid = np.asarray(pyramid)
-        #blendmap = np.asarray(blendmap)
+
+        norm = np.issubdtype(pyramid.dtype, np.integer)
+
         pyramid2 = np.zeros((pyramid.shape[0], pyramid.shape[1], pyramid.shape[2], 4),dtype=pyramid.dtype)
         pyramid2[:,:,:,0:pyramid.shape[3]] = pyramid[:,:,:,0:pyramid.shape[3]]
-        norm = np.issubdtype(pyramid2.dtype, np.integer)
         pyramid_buf = cl.image_from_array(self.ctx, pyramid2, 4, mode="r", norm_int=norm)
-        blendmap_buf = cl.image_from_array(self.ctx, blendmap, 4, mode="r")
+
         dest = np.zeros_like(pyramid2[0],dtype=pyramid.dtype)
         dest_buf = cl.image_from_array(self.ctx, dest, 4, mode="w", norm_int=norm)
 
+        xoff = dest.shape[1] - x
+        yoff = dest.shape[0] - y
+        blendmap_buf = cl.image_from_array(self.ctx, blendmap[yoff:yoff+dest.shape[0],xoff:xoff+dest.shape[1],:].copy(), 4, mode="r")
+
         queue = cl.CommandQueue(self.ctx)
         self.prg.blend(queue, (dest.shape[1], dest.shape[0]), None,
-                       pyramid_buf, blendmap_buf,
-                       np.uint32(dest.shape[1]-x), np.uint32(dest.shape[0]-y),
-                       dest_buf)
+                       pyramid_buf, blendmap_buf, dest_buf)
         cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=(dest.shape[1], dest.shape[0])).wait()
 
         dest = dest[:,:,0:pyramid.shape[3]].copy()
