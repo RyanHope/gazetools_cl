@@ -38,7 +38,7 @@ class MainApp(QWidget):
         vs_sw = 473.76
         vs_rx = 1680
         ez = 700
-        self.rf = RetinaFilter(ctx,frame.shape[1],frame.shape[0],vs_rx,vs_sw,vs_pd,ez)
+        self.rf = RetinaFilter(ctx,frame.shape[1],frame.shape[0],frame.dtype,vs_rx,vs_sw,vs_pd,ez)
 
     def makeImage(self):
         image = Image()

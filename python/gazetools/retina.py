@@ -28,8 +28,8 @@ class blend_OCL(OCLWrapper):
     __kernel__ = "retina.cl"
     def __call__(self, ctx, pyramid, blendmap, x, y):
         self.build(ctx)
-        pyramid = np.asarray(pyramid)
-        blendmap = np.asarray(blendmap)
+        #pyramid = np.asarray(pyramid)
+        #blendmap = np.asarray(blendmap)
         pyramid2 = np.zeros((pyramid.shape[0], pyramid.shape[1], pyramid.shape[2], 4),dtype=pyramid.dtype)
         pyramid2[:,:,:,0:pyramid.shape[3]] = pyramid[:,:,:,0:pyramid.shape[3]]
         norm = np.issubdtype(pyramid2.dtype, np.integer)
@@ -100,7 +100,7 @@ blendmap = blendmap_OCL()
 class RetinaFilter(object):
 
     #rf = RetinaFilter(ctx,img.shape[1],img.shape[0],vs_rx,vs_sw,vs_pd,vs_aspect,ez)
-    def __init__(self, ctx, ix, iy, rx, sw, pd, ez, ex=0, ey=0):
+    def __init__(self, ctx, ix, iy, idtype, rx, sw, pd, ez, ex=0, ey=0):
         self.ctx = ctx
         self.ix = ix
         self.iy = iy
@@ -131,20 +131,18 @@ class RetinaFilter(object):
         self.fs = int(np.log(o)/np.log(2))
         self.fs = 1<<self.fs
         if self.fs < o: self.fs *= 2
-        self.gpA = None
+        self.gpA = np.zeros((self.levels,self.fs,self.fs,4), dtype=idtype)
 
     def makePyramid(self, img):
-        if self.gpA==None:
-            gpA = np.zeros((self.levels,self.fs,self.fs,4), dtype=img.dtype)
-        gpA[0,:img.shape[0],:img.shape[1],:img.shape[2]] = img
+        self.gpA[0,:img.shape[0],:img.shape[1],:img.shape[2]] = img
 
         for i in xrange(self.levels-1):
-            gpA[i+1,:self.fs>>(i+1),:self.fs>>(i+1),:] = cv2.pyrDown(gpA[i,:self.fs>>(i),:self.fs>>(i),:])
+            self.gpA[i+1,:self.fs>>(i+1),:self.fs>>(i+1),:] = cv2.pyrDown(self.gpA[i,:self.fs>>(i),:self.fs>>(i),:])
 
         for i in xrange(self.levels):
             for j in xrange(i):
-                gpA[i,:self.fs>>(i-j-1),:self.fs>>(i-j-1),:] = cv2.pyrUp(gpA[i,:self.fs>>(i-j),:self.fs>>(i-j),:])
-        return gpA[:,:img.shape[0],:img.shape[1],:img.shape[2]]
+                self.gpA[i,:self.fs>>(i-j-1),:self.fs>>(i-j-1),:] = cv2.pyrUp(self.gpA[i,:self.fs>>(i-j),:self.fs>>(i-j),:])
+        return self.gpA[:,:img.shape[0],:img.shape[1],:img.shape[2]]
 
     def blend(self, pyramid, x, y):
         return blend(self.ctx, pyramid, self.blendmap, x, y)
