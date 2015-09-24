@@ -16,7 +16,7 @@
 # along with gazetools.  If not, see <http://www.gnu.org/licenses/>.
 #===============================================================================
 
-from .helpers import OCLWrapper
+from .helpers import OCLWrapper, init_image
 from .visualangle import subtended_angle, subtended_angle2
 from .filter import pyrUp, pyrDown
 
@@ -36,7 +36,7 @@ class blend_OCL(OCLWrapper):
         pyramid_buf = cl.image_from_array(self.ctx, pyramid2, 4, mode="r", norm_int=norm)
 
         dest = np.zeros_like(pyramid2[0],dtype=pyramid.dtype)
-        dest_buf = cl.image_from_array(self.ctx, dest, 4, mode="w", norm_int=norm)
+        dest_buf = init_image(self.ctx, dest, 4, mode="w", norm_int=norm)
 
         xoff = dest.shape[1] - x
         yoff = dest.shape[0] - y
