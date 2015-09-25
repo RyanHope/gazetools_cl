@@ -45,7 +45,6 @@ class blend_OCL(OCLWrapper):
                        pyramid_buf, blendmap_buf, dest_buf)
         cl.enqueue_copy(queue, dest, dest_buf, origin=(0, 0), region=(dest.shape[1], dest.shape[0])).wait()
 
-        dest = dest[:,:,0:pyramid.shape[3]].copy()
         dest_buf.release()
         pyramid_buf.release()
         blendmap_buf.release()
