@@ -83,8 +83,9 @@ class MainApp(QWidget):
         """Read frame from camera and repaint QLabel widget.
         """
         _, frame = self.capture.read()
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
         frame = self.rf.filter(frame,self.focus[0],self.focus[1])
+        frame = cv2.merge((frame[:,:,0],frame[:,:,1],frame[:,:,2]))
         image = QImage(frame, frame.shape[1], frame.shape[0],
                         frame.strides[0], QImage.Format_RGB888)
         self.video.setPixmap(QPixmap.fromImage(image))

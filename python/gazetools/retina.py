@@ -31,11 +31,9 @@ class blend_OCL(OCLWrapper):
 
         norm = np.issubdtype(pyramid.dtype, np.integer)
 
-        pyramid2 = np.zeros((pyramid.shape[0], pyramid.shape[1], pyramid.shape[2], 4),dtype=pyramid.dtype)
-        pyramid2[:,:,:,0:pyramid.shape[3]] = pyramid[:,:,:,0:pyramid.shape[3]]
-        pyramid_buf = cl.image_from_array(self.ctx, pyramid2, 4, mode="r", norm_int=norm)
+        pyramid_buf = cl.image_from_array(self.ctx, pyramid, 4, mode="r", norm_int=norm)
 
-        dest = np.zeros_like(pyramid2[0],dtype=pyramid.dtype)
+        dest = np.zeros_like(pyramid[0],dtype=pyramid.dtype)
         dest_buf = init_image(self.ctx, dest, 4, mode="w", norm_int=norm)
 
         xoff = dest.shape[1] - x
@@ -141,4 +139,4 @@ class RetinaFilter(object):
         for i in xrange(self.levels):
             for j in xrange(i):
                 self.pyramid[i,:self.fs>>(i-j-1),:self.fs>>(i-j-1),:] = cv2.pyrUp(self.pyramid[i,:self.fs>>(i-j),:self.fs>>(i-j),:])
-        return blend(self.ctx, self.pyramid[:,:img.shape[0],:img.shape[1],:img.shape[2]], self.blendmap, x, y)
+        return blend(self.ctx, self.pyramid[:,:img.shape[0],:img.shape[1],:].copy(), self.blendmap, x, y)
