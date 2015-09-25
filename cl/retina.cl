@@ -39,15 +39,15 @@ __kernel void blendmap(__constant float* ce, __constant float* var, float cx, fl
 
 __kernel void blend(__read_only image3d_t pyramid, __read_only image2d_t blendmap, __write_only image2d_t out)
 {
-  unsigned int x = get_global_id(0);
-  unsigned int y = get_global_id(1);
+  unsigned int y = get_global_id(0);
+  unsigned int x = get_global_id(1);
 
-  float4 bm = read_imagef(blendmap, (int2)(x,y));
+  float4 bm = read_imagef(blendmap, (int2)(y,x));
 
-  float4 v1 = read_imagef(pyramid, (int4)(x,y,bm.w,0));
-  float4 v2 = read_imagef(pyramid, (int4)(x,y,bm.w-1,0));
+  float4 v1 = read_imagef(pyramid, (int4)(y,x,bm.w,0));
+  float4 v2 = read_imagef(pyramid, (int4)(y,x,bm.w-1,0));
 
   float4 pixel = v1*(1-bm.z) + v2*bm.z;
 
-  write_imagef(out, (int2)(x, y), pixel);
+  write_imagef(out, (int2)(y, x), pixel);
 }
