@@ -128,23 +128,17 @@ class RetinaFilter(object):
                                  self.halfres_eccentricity,
                                  self.contrast_sensitivity,
                                  self.decay_constant)
-        self.pyramid = None
         o = np.max((self.ix,self.iy))
         self.fs = int(np.log(o)/np.log(2))
         self.fs = 1<<self.fs
         if self.fs < o: self.fs *= 2
-        self.gpA = np.zeros((self.levels,self.fs,self.fs,4), dtype=idtype)
+        self.pyramid = np.zeros((self.levels,self.fs,self.fs,4), dtype=idtype)
 
-    def makePyramid(self, img):
-        self.gpA[0,:img.shape[0],:img.shape[1],:img.shape[2]] = img
-
+    def filter(self, img, x, y):
+        self.pyramid[0,:img.shape[0],:img.shape[1],:img.shape[2]] = img
         for i in xrange(self.levels-1):
-            self.gpA[i+1,:self.fs>>(i+1),:self.fs>>(i+1),:] = cv2.pyrDown(self.gpA[i,:self.fs>>(i),:self.fs>>(i),:])
-
+            self.pyramid[i+1,:self.fs>>(i+1),:self.fs>>(i+1),:] = cv2.pyrDown(self.pyramid[i,:self.fs>>(i),:self.fs>>(i),:])
         for i in xrange(self.levels):
             for j in xrange(i):
-                self.gpA[i,:self.fs>>(i-j-1),:self.fs>>(i-j-1),:] = cv2.pyrUp(self.gpA[i,:self.fs>>(i-j),:self.fs>>(i-j),:])
-        return self.gpA[:,:img.shape[0],:img.shape[1],:img.shape[2]]
-
-    def blend(self, pyramid, x, y):
-        return blend(self.ctx, pyramid, self.blendmap, x, y)
+                self.pyramid[i,:self.fs>>(i-j-1),:self.fs>>(i-j-1),:] = cv2.pyrUp(self.pyramid[i,:self.fs>>(i-j),:self.fs>>(i-j),:])
+        return blend(self.ctx, self.pyramid[:,:img.shape[0],:img.shape[1],:img.shape[2]], self.blendmap, x, y)

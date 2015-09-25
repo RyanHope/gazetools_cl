@@ -84,8 +84,7 @@ class MainApp(QWidget):
         """
         _, frame = self.capture.read()
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        pyramid = np.array(self.rf.makePyramid(frame))
-        frame = self.rf.blend(pyramid,self.focus[0],self.focus[1])
+        frame = self.rf.filter(frame,self.focus[0],self.focus[1])
         image = QImage(frame, frame.shape[1], frame.shape[0],
                         frame.strides[0], QImage.Format_RGB888)
         self.video.setPixmap(QPixmap.fromImage(image))
