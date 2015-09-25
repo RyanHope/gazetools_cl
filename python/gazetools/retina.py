@@ -33,7 +33,7 @@ class blend_OCL(OCLWrapper):
 
         pyramid_buf = cl.image_from_array(self.ctx, pyramid, 4, mode="r", norm_int=norm)
 
-        dest = np.zeros_like(pyramid[0],dtype=pyramid.dtype)
+        dest = np.zeros_like(pyramid[:,:,0,:],dtype=pyramid.dtype)
         dest_buf = init_image(self.ctx, dest, 4, mode="w", norm_int=norm)
 
         xoff = dest.shape[1] - x
@@ -129,13 +129,13 @@ class RetinaFilter(object):
         self.fs = int(np.log(o)/np.log(2))
         self.fs = 1<<self.fs
         if self.fs < o: self.fs *= 2
-        self.pyramid = np.zeros((self.levels,self.fs,self.fs,4), dtype=idtype)
+        self.pyramid = np.zeros((self.fs,self.fs,self.levels,4), dtype=idtype)
 
     def filter(self, img, x, y):
-        self.pyramid[0,:img.shape[0],:img.shape[1],:img.shape[2]] = img
+        self.pyramid[:img.shape[0],:img.shape[1],0,:img.shape[2]] = img
         for i in xrange(self.levels-1):
-            self.pyramid[i+1,:self.fs>>(i+1),:self.fs>>(i+1),:] = cv2.pyrDown(self.pyramid[i,:self.fs>>(i),:self.fs>>(i),:])
+            self.pyramid[:self.fs>>(i+1),:self.fs>>(i+1),i+1,:] = cv2.pyrDown(self.pyramid[:self.fs>>(i),:self.fs>>(i),i,:])
         for i in xrange(self.levels):
             for j in xrange(i):
-                self.pyramid[i,:self.fs>>(i-j-1),:self.fs>>(i-j-1),:] = cv2.pyrUp(self.pyramid[i,:self.fs>>(i-j),:self.fs>>(i-j),:])
-        return blend(self.ctx, self.pyramid[:,:img.shape[0],:img.shape[1],:].copy(), self.blendmap, x, y)
+                self.pyramid[:self.fs>>(i-j-1),:self.fs>>(i-j-1),i,:] = cv2.pyrUp(self.pyramid[:self.fs>>(i-j),:self.fs>>(i-j),i,:])
+        return blend(self.ctx, self.pyramid[:img.shape[0],:img.shape[1],:,:].copy(), self.blendmap, x, y)

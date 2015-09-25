@@ -44,8 +44,8 @@ __kernel void blend(__read_only image3d_t pyramid, __read_only image2d_t blendma
 
   float4 bm = read_imagef(blendmap, (int2)(y,x));
 
-  float4 v1 = read_imagef(pyramid, (int4)(y,x,bm.w,0));
-  float4 v2 = read_imagef(pyramid, (int4)(y,x,bm.w-1,0));
+  float4 v1 = read_imagef(pyramid, (int4)(bm.w,y,x,0));
+  float4 v2 = read_imagef(pyramid, (int4)(bm.w-1,y,x,0));
 
   float4 pixel = v1*(1-bm.z) + v2*bm.z;
 
