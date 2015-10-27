@@ -71,13 +71,14 @@ class MainApp(QWidget):
     def setup_camera(self):
         """Initialize camera.
         """
-        self.capture = cv2.VideoCapture("http://wpc.c1a9.edgecastcdn.net/hls-live/20C1A9/cnn/ls_satlink/b_828.m3u8")
+        #self.capture = cv2.VideoCapture("http://wpc.c1a9.edgecastcdn.net/hls-live/20C1A9/cnn/ls_satlink/b_828.m3u8")
+        self.capture = cv2.VideoCapture("/Users/ryanhope/workspace/gazetools_cl/images/exp1.mpg")
         #self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.video_size.width())
         #self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.video_size.height())
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.display_video_stream)
-        self.timer.start(15)
+        self.timer.start(1)
 
     def display_video_stream(self):
         """Read frame from camera and repaint QLabel widget.
