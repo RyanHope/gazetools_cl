@@ -15,7 +15,7 @@ from gazetools import *
 ctx = cl.create_some_context(answers=[0,1])
 
 # img = np.asarray(Image.open(pkg_resources.resource_filename("gazetools", "resources/images/Bl9ZQQG.jpg")))
-img = np.asarray(Image.open(pkg_resources.resource_filename("gazetools", "resources/images/social.png")))
+img = np.asarray(Image.open(pkg_resources.resource_filename("gazetools", "resources/images/vini1.png")))
 r = 1.0*img.shape[1]/img.shape[0]
 rr = 10
 aspect = (r*rr,rr)
@@ -29,10 +29,12 @@ vs_rx = 1680
 ez = 700
 rf = RetinaFilter(ctx,img.shape[1],img.shape[0],img.dtype,vs_rx,vs_sw,vs_pd,ez)
 
-blended = rf.filter(img,1080,img.shape[0]/2)
+blended = rf.filter(img,0,img.shape[0])#img.shape[1]/2,img.shape[0]/2)
 out = Image.frombuffer("RGBA",(img.shape[1],img.shape[0]),blended,"raw","RGBA",0,1)
-out.save("blended2.png")
-
+out.save("vini1-blended-bl.png")
+bm = rf.blendmap[:,:,3].copy()
+bm = Image.frombuffer("F",(rf.blendmap.shape[1],rf.blendmap.shape[0]),bm,"raw","F",0,1).convert('P')
+bm.save("blendmap.png")
 # plt.figure("Blended",figsize=aspect)
 # plt.imshow(blended)
 # plt.show()
